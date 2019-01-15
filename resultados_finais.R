@@ -7,6 +7,8 @@ library(Rmisc)
 library(effsize)
 library(lme4)
 library(lmtest)
+library(stargazer) #para tabelas
+library(RVAideMemoire)
 
 #Importing and wrangling data
 geral <- read.table("planilhageral.txt", header = T)
@@ -50,7 +52,7 @@ ggarrange(ggdensity(belostomatidae, x = "taxacrescimento", fill = "tratamento") 
 step(belo_model_log) #incluir tudo
 
 #A função para regressão é “lm” e não requer pacote estatístico (variavel resposta ~ variável preditora)
-belo_model_log <-  lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco + fezmuda, data = belostomatidae)
+belo_model_log <-  lm(log(taxacrescimento) ~ log(biomassant) + tratamento + Error(bloco), data = belostomatidae)
 belo_model_log
 
 step(belo_model_log) #incluir tudo
@@ -75,10 +77,33 @@ belostomatidae$taxacrescimento[17] <- NA #resolveu muito!
 
 anova(belo_model_log) #bloco não teve efeito (p = 0.73) e biomassa e tratamento tiveram
 
-#Com lme
-belo_model_log <-  lmer(log(taxacrescimento) ~ log(biomassant) + tratamento + (1|bloco), data = belostomatidae)
-belo_model_log
-summary(belo_model_log)
+#Com aov/lmer
+belo_aov_int <-  glmer(taxacrescimento ~ biomassant*tratamento + (1|bloco), data = belostomatidae, family = Gamma())
+belo_aov <- glmer(taxacrescimento ~ biomassant + tratamento + (1|bloco), data = belostomatidae, family = Gamma())
+belo_aov_nulo <- glmer(taxacrescimento ~ 1 + (1|bloco), data = belostomatidae, family = Gamma())
+
+summary(belo_aov_int) #interação significativa -> o efeito do tam corp na tax cresc é diferente entre os tratamentos
+summary(belo_aov)
+
+anova(belo_aov, belo_aov_int) #modelo intera é melhor que sem
+anova(belo_aov_int, belo_aov_nulo) #modelo inter é melhor que o nulo
+
+summary(belo_aov_int)
+
+plotresid(belo_aov_int, shapiro = T)
+
+shapiro.test(resid(belo_aov_int))
+
+aquecido_belo <- belostomatidae %>% filter(tratamento == "Aquecido")
+ambiente_belo <- belostomatidae %>% filter(tratamento == "Ambiente")
+
+aq_belo <- lmer(log(taxacrescimento) ~ log(biomassant) + (1|bloco), data = aquecido_belo)
+am_belo <- lmer(log(taxacrescimento) ~ log(biomassant) + (1|bloco), data = ambiente_belo)
+
+summary(aq_belo)
+summary(am_belo)
+
+shapiro.test(resid(belo_model_log_aov))
 
 #Modelos sucessivos
 belo_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco + fezmuda, data = belostomatidae)
