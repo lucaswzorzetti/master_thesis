@@ -28,6 +28,7 @@
     geral <- geral %>% mutate(biomassa_convertida = 
                                 BiomassaTotalconsumidaprimeirodia) #transformar para
                               #biomassa com equações alometricas de Benke et al 1999
+    geral <- geral %>% mutate(biomassa_mg = biomassant*1000)
     
     View(geral)
   
@@ -62,9 +63,8 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
 
 
   # Belostomatidae ----------------------------------------------------------
-
     #lm para testar outliers
-        belo_cresc_lm <-  lm(log(taxacrescimento) ~ log(biomassant) + 
+        belo_cresc_lm <-  lm(log(taxacrescimento) ~ log(biomassa_mg) + 
                                 tratamento, data = belostomatidae)
         belo_cresc_lm #coeficientes
   
@@ -89,7 +89,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
 
 
     #Modelando com lme
-      belo_cresc_lme_int <-  lme(log(taxacrescimento) ~ log(biomassant)*tratamento,
+      belo_cresc_lme_int <-  lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento,
                                  random = ~1|bloco,
                                  weights = varIdent(form = ~ 1 | tratamento),
                                  data = belostomatidae)
@@ -102,109 +102,56 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
       plot(belo_cresc_lme_int)
       
       #Figura do modelo
-      belo_fig_cresc = belostomatidae %>% ggplot(mapping = aes(x = log(biomassant), y = log(taxacrescimento), shape = tratamento) +
-                geom_smooth(aes(y = predict(belo_cresc_lme_int))) +
-                geom_point(aes(fill=factor(tratamento,
-                                           labels=c("Ambiente", "Aquecido"))),
-                           size=5) +
-                scale_fill_manual(values = c("#66cc33","#cc0000")) +
-                ylab("Logaritmo da Taxa de Crescimento [proporção]") +
-                xlab("Logaritmo do Tamanho corporal [gr]") +
-                theme_classic()+ scale_shape_manual(values = c(21, 22)) +
-                theme(legend.title = element_text(size=20, face = "bold"))+
-                theme(legend.text = element_text(size=12))+
-                theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-                theme(axis.title.x = element_text(size = 20),axis.title.y=element_text(size=20))+
-                theme(axis.text = element_text(color = "black",size = rel(1.3))) 
-                
-               belo_cresc
-                                                
-      belo_cresc = ggplot(belostomatidae, mapping = aes(x=log(biomassant), 
-                                               y=log(taxacrescimento), fill=tratamento,
-                                               shape = tratamento))+
-        geom_smooth(method="lm")+
-        geom_point(aes(fill=factor(tratamento, labels=c("Ambiente", "Aquecido"))),
-                   size=5)+
-      belo_cresc + scale_fill_manual(values = c("#66cc33","#cc0000"))+
-        ylab("Logaritmo da Taxa de Crescimento [proporção]")+
-        xlab("Logaritmo do Tamanho corporal [gr]")+
-        theme_classic()+ scale_shape_manual(values = c(21, 22))
-        theme(legend.title = element_text(size=20, face = "bold"))+
-        theme(legend.text = element_text(size=12))+
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-        theme(axis.title.x = element_text(size = 20),axis.title.y=element_text(size=20))+
-        theme(axis.text = element_text(color = "black",size = rel(1.3)))+
-        ylab("Taxa de Crescimento [proporção]")+
-        xlab("Tamanho corporal [gr]")
-        
-        
-      ggsave("Figura2PI.png", width = 20, height = 14, unit="cm", dpi=600)
-      ggsave("Figura2PI.pdf", width = 20, height = 14,unit ="cm", dpi=600)
+      belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
+                                ynome = "Taxa de Crescimento [proporção] em escala logaritmica", model = belo_cresc_lme_int) +
+        geom_hline(yintercept = 1, linetype = 2)
+      belo_cresc 
+      
+      plotresid(belo_cresc_lme_int)
+      
+      #Testes de normalidade dos residuos
+      shapiro.test(resid(belo_cresc_lme_int))
 
-summary(belo_aov)
 
-anova(belo_aov, belo_cresc_lme_int) #modelo intera é melhor que sem
-anova(belo_cresc_lme_int, belo_aov_nulo) #modelo inter é melhor que o nulo
+  # Notonectidae ------------------------------------------------------------
+    noto_cresc_lme_int <- lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento,
+                              weights = varIdent(form = ~ 1 | tratamento),
+                              random = ~1|bloco, data = notonectidae)
+    summary(noto_cresc_lme_int) #Não tem interação
+    
+    Anova(noto_cresc_lme_int, type = "III") #interação não significativa mesmo
+    
+    noto_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
+                          weights = varIdent(form = ~ 1 | tratamento),
+                          random = ~1|bloco, data = notonectidae)
+    
+    summary(noto_cresc_lme)
+    
+    Anova(noto_cresc_lme, type = "II") #apenas biomassa significativa
 
-summary(belo_cresc_lme_int)
-
-plotresid(belo_cresc_lme_int, shapiro = T)
-
-shapiro.test(resid(belo_cresc_lme_int))
-
-aquecido_belo <- belostomatidae %>% filter(tratamento == "Aquecido")
-ambiente_belo <- belostomatidae %>% filter(tratamento == "Ambiente")
-
-aq_belo <- lmer(log(taxacrescimento) ~ log(biomassant) + (1|bloco), data = aquecido_belo)
-am_belo <- lmer(log(taxacrescimento) ~ log(biomassant) + (1|bloco), data = ambiente_belo)
-
-summary(aq_belo)
-summary(am_belo)
-
-shapiro.test(resid(belo_model_log_aov))
-
-#Modelos sucessivos
-belo_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco + fezmuda, data = belostomatidae)
-belo_cresc_lm <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco + fezmuda, data = belostomatidae)
-belo_model_log1 <- lm(log(taxacrescimento) ~ log(biomassant) + bloco, data = belostomatidae)
-belo_model_log2 <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco, data = belostomatidae)
-
-summary(belo_model)
-summary(belo_cresc_lm)
-
-lrtest(belo_model, belo_cresc_lm, belo_model_log1, belo_model_log2) #melhor o completo mesmo
-step(belo_cresc_lm) #incluir tudo
-
-###Notonectidae
-noto_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco, data = notonectidae)
-noto_model_log <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco, data = notonectidae)
-
-lrtest(noto_model, noto_model_log)
-step(noto_model_log)
-
-summary(noto_model_log)
-
-#Teste para NORMALIDADE (valores de p > 0,05 indicam dados normais)
-shapiro.test(rstudent(noto_model_log))   ##teste de shapiro wilk (normalidade)
-
-# Análise visual para homogeneidade dos resíduos (visualmente eles devem se distribuir igualmente #abaixo e acima da linha)
-plot(rstudent(noto_model_log) ~ fitted(noto_model_log), pch = 19)
-abline(h = 0, lty = 2)
-
-#Visualização gráfica lty é o tipo da linha 1: linha contínua; 2: linha descontínua
-plot(log(notonectidae$taxacrescimento)~log(notonectidae$biomassant))
-abline(noto_model_log,lty=2)
-
-plot(noto_model_log)
-
-notonectidae$taxacrescimento[16] <- NA
-notonectidae$taxacrescimento[1] <- NA
-
-anova(noto_model_log) #Só a biomassa se correlacionou, o resto não
-
+    plot(noto_cresc_lme)
+    
+    #verificando outliers
+    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = notonectidae)) #1 é outlier
+    
+    notonectidae$taxacrescimento[1] <- NA
+    
+    #Verificando normalidade dos resíduos
+    shapiro.test(resid(noto_cresc_lme)) #ao que parece os resíduos não são normais
+    
+    #Figura
+    model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacrescimento,
+               "Taxa de Crescimento [proporção] em escala logaritmica", model = noto_cresc_lme)+
+      geom_hline(yintercept = 1, linetype = 2)
+    
+    
+    
 ####Anisoptera
 aniso_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco, data = anisoptera)
 aniso_model_log <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco, data = anisoptera)
+
+  # Anisoptera --------------------------------------------------------------
+
 
 lrtest(aniso_model, aniso_model_log)
 step(aniso_model_log)
