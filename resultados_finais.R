@@ -140,98 +140,94 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     shapiro.test(resid(noto_cresc_lme)) #ao que parece os resíduos não são normais
     
     #Figura
-    model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacrescimento,
+    noto_cresc <- model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacrescimento,
                "Taxa de Crescimento [proporção] em escala logaritmica", model = noto_cresc_lme)+
       geom_hline(yintercept = 1, linetype = 2)
     
     
-    
-####Anisoptera
-aniso_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco, data = anisoptera)
-aniso_model_log <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + bloco, data = anisoptera)
-
   # Anisoptera --------------------------------------------------------------
+  
+    aniso_cresc_lme_int <- lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco,
+                             data = anisoptera)
+    summary(aniso_cresc_lme_int) #Não tem interação
+    
+    Anova(aniso_cresc_lme_int, type = "III")
+    
+    aniso_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
+                           random = ~1|bloco,
+                           data = anisoptera)
+    
+    summary(aniso_cresc_lme) #apenas biomassa e o intercepto significativos
+    
+    Anova(aniso_cresc_lme, type = "II") 
+    
+    #verificando outliers
+    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = anisoptera))
 
+    anisoptera$taxacrescimento[4] <- NA
+    anisoptera$taxacrescimento[16] <- NA
+    
+    shapiro.test(resid(aniso_cresc_lme)) #continua não normal
+    
+    #figura
+    aniso_cresc <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$taxacrescimento, 
+               "Taxa de Crescimento [proporção] em escala logaritmica",
+               model = aniso_cresc_lme)+
+      geom_hline(yintercept = 1, linetype = 2)
+    aniso_cresc 
+      
+    
+  # Zygoptera ---------------------------------------------------------------
+    zygo_cresc_lme_int <- lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento,
+                              random = ~1|bloco, data = zygoptera)
+    
+    summary(zygo_cresc_lme_int) #sem interação
+    
+    Anova(zygo_cresc_lme_int, type = "III")
+    
+    zygo_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
+                              random = ~1|bloco, data = zygoptera)
+    summary(zygo_cresc_lme)
+    
+    Anova(zygo_cresc_lme, type = "II")
+    
+    #verificando outliers
+    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = zygoptera))
+    
+    zygoptera$taxacrescimento[24] <- NA
+    
+    shapiro.test(resid(zygo_cresc_lme)) #no qqplot parece normal, mas o teste não confirma isso
+    
+    #Figura
+    model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$taxacrescimento, 
+               "Taxa de Crescimento [proporção] em escala logaritmica", zygo_cresc_lme)+
+      geom_hline(yintercept = 1, linetype = 2)
+    
 
-lrtest(aniso_model, aniso_model_log)
-step(aniso_model_log)
-
-summary(aniso_model_log)
-
-#Teste para NORMALIDADE (valores de p > 0,05 indicam dados normais)
-shapiro.test(rstudent(aniso_model_log))   ##teste de shapiro wilk (normalidade)
-
-# Análise visual para homogeneidade dos resíduos (visualmente eles devem se distribuir igualmente #abaixo e acima da linha)
-plot(rstudent(aniso_model_log) ~ fitted(aniso_model_log), pch = 19)
-abline(h = 0, lty = 2)
-
-#Visualização gráfica lty é o tipo da linha 1: linha contínua; 2: linha descontínua
-plot(log(anisoptera$taxacrescimento)~log(anisoptera$biomassant))
-abline(aniso_model_log,lty=2)
-
-plot(aniso_model_log)
-
-anisoptera$taxacrescimento[4] <- NA
-anisoptera$taxacrescimento[16] <- NA
-anisoptera$taxacrescimento[21] <- NA
-
-anova(aniso_model_log) #o bloco está fazendo efeito!
-
-####Zygoptera
-zygo_model <- lm(taxacrescimento ~ biomassant + tratamento + bloco, data = zygoptera)
-zygo_model_log <- lm(log(taxacrescimento) ~ log(biomassant) + tratamento + fezmuda + bloco, data = zygoptera)
-
-lrtest(zygo_model, zygo_model_log)
-step(zygo_model_log)
-
-summary(zygo_model_log)
-
-#Teste para NORMALIDADE (valores de p > 0,05 indicam dados normais)
-shapiro.test(rstudent(zygo_model_log))   ##teste de shapiro wilk (normalidade)
-
-# Análise visual para homogeneidade dos resíduos (visualmente eles devem se distribuir igualmente #abaixo e acima da linha)
-plot(rstudent(zygo_model_log) ~ fitted(zygo_model_log), pch = 19)
-abline(h = 0, lty = 2)
-
-#Visualização gráfica lty é o tipo da linha 1: linha contínua; 2: linha descontínua
-plot(log(zygoptera$taxacrescimento)~log(zygoptera$biomassant))
-abline(zygo_model_log,lty=2)
-
-plot(zygo_model_log)
-
-zygoptera$taxacrescimento[24] <- NA
-zygoptera$taxacrescimento[32] <- NA
-
-anova(zygo_model_log)
-
-
-
-# modelos de taxa de captura ----------------------------------------------
-##Belostomatidae
-belo_model <- lm(taxacap1 ~ biomassant + tratamento + bloco + fezmuda, data = belostomatidae)
-belo_model_log <-  lm(log(taxacap1) ~ log(biomassant) + tratamento + bloco + fezmuda, data = belostomatidae)
-
-lrtest(belo_model, belo_model_log)
-step(belo_model_log) #incluir tudo
-
-#Sumário dos resultados do modelo
-summary(belo_model_log)
-
-#Teste para NORMALIDADE (valores de p > 0,05 indicam dados normais)
-shapiro.test(rstudent(belo_model_log))   ##teste de shapiro wilk (normalidade)
-
-# Análise visual para homogeneidade dos resíduos (visualmente eles devem se distribuir igualmente #abaixo e acima da linha)
-plot(rstudent(belo_model_log) ~ fitted(belo_model_log), pch = 19)
-abline(h = 0, lty = 2)
-
-#Visualização gráfica lty é o tipo da linha 1: linha contínua; 2: linha descontínua
-plot(log(belostomatidae$taxacap1)~log(belostomatidae$biomassant))
-abline(belo_model_log,lty=2)
-
-plot(belo_model_log)
-
-belostomatidae$taxacap1[]
-
-anova(belo_model_log)
-
-###
+  # Geral -------------------------------------------------------------------
+    geral_cresc_lme_int <- lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + 
+                                 log(biomassa_mg)*suborfam,
+                               random = ~1|bloco, data = geral) #add efeito do taxon depois
+    summary(geral_cresc_lme_int) #sem interação
+    Anova(geral_cresc_lme_int, type = "III")
+    
+    geral_cresc_lme_int2 <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + 
+                                 log(biomassa_mg)*suborfam,
+                               random = ~1|bloco, data = geral)
+    summary(geral_cresc_lme_int2)
+    
+    Anova(geral_cresc_lme_int2, type = "III")
+    
+    plot(geral_cresc_lme_int2)
+    
+    
+    
+    #figura
+    model_line(geral,  geral$biomassa_mg, geral$taxacrescimento, 
+               "Taxa de Crescimento [proporção] em escala logaritmica", geral_cresc_lme_int2)+
+      geom_hline(yintercept = 1, linetype = 2)
+    
+    
+    
+    
