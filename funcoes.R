@@ -41,3 +41,6 @@ detach_package <- function(pkg, character.only = FALSE)
     detach(search_item, unload = TRUE, character.only = TRUE)
   }
 }
+
+
+r.squaredGLMM(fit1.lme) #para r2 de lme no pacote ‘MuMIn
