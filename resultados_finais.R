@@ -3,6 +3,8 @@
   ### Passando mais a limpo ainda meus resultados ##
     library(tidyverse) #vários pacotes como o ggplot2 e o dplyr
     library(ggpubr)
+    library(ggplot2)
+    library(dplyr)
     library(Rmisc)
     library(effsize)
     library(lme4) #glm, glmm, lme, etc
@@ -102,15 +104,15 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
       plot(belo_cresc_lme_int)
       
       #Figura do modelo
-      belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
-                                ynome = "Taxa de Crescimento [proporção] em escala logaritmica", model = belo_cresc_lme_int) +
-        geom_hline(yintercept = 1, linetype = 2)
-      belo_cresc 
-      
-      plotresid(belo_cresc_lme_int)
+        belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
+                                  ynome = "Taxa de Crescimento [proporção] em escala logaritmica", model = belo_cresc_lme_int) +
+          geom_hline(yintercept = 1, linetype = 2)
+        belo_cresc 
+        
+        plotresid(belo_cresc_lme_int)
       
       #Testes de normalidade dos residuos
-      shapiro.test(resid(belo_cresc_lme_int))
+        shapiro.test(resid(belo_cresc_lme_int))
 
 
   # Notonectidae ------------------------------------------------------------
@@ -132,17 +134,19 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     plot(noto_cresc_lme)
     
     #verificando outliers
-    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = notonectidae)) #1 é outlier
-    
-    notonectidae$taxacrescimento[1] <- NA
+      plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = notonectidae)) #1 é outlier
+      
+      notonectidae$taxacrescimento[1] <- NA
     
     #Verificando normalidade dos resíduos
-    shapiro.test(resid(noto_cresc_lme)) #ao que parece os resíduos não são normais
+      shapiro.test(resid(noto_cresc_lme)) #ao que parece os resíduos não são normais
     
     #Figura
-    noto_cresc <- model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacrescimento,
-               "Taxa de Crescimento [proporção] em escala logaritmica", model = noto_cresc_lme)+
-      geom_hline(yintercept = 1, linetype = 2)
+      noto_cresc <- model_line(notonectidae, notonectidae$biomassa_mg,
+                               notonectidae$taxacrescimento,
+                 "Taxa de Crescimento [proporção] em escala logaritmica", 
+                 model = noto_cresc_lme)+
+        geom_hline(yintercept = 1, linetype = 2)
     
     
   # Anisoptera --------------------------------------------------------------
@@ -163,19 +167,19 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     Anova(aniso_cresc_lme, type = "II") 
     
     #verificando outliers
-    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = anisoptera))
-
-    anisoptera$taxacrescimento[4] <- NA
-    anisoptera$taxacrescimento[16] <- NA
-    
-    shapiro.test(resid(aniso_cresc_lme)) #continua não normal
+      plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+  
+      anisoptera$taxacrescimento[4] <- NA
+      anisoptera$taxacrescimento[16] <- NA
+      
+      shapiro.test(resid(aniso_cresc_lme)) #continua não normal
     
     #figura
-    aniso_cresc <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$taxacrescimento, 
-               "Taxa de Crescimento [proporção] em escala logaritmica",
-               model = aniso_cresc_lme)+
-      geom_hline(yintercept = 1, linetype = 2)
-    aniso_cresc 
+      aniso_cresc <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$taxacrescimento, 
+                 "Taxa de Crescimento [proporção] em escala logaritmica",
+                 model = aniso_cresc_lme)+
+        geom_hline(yintercept = 1, linetype = 2)
+      aniso_cresc 
       
     
   # Zygoptera ---------------------------------------------------------------
@@ -230,4 +234,83 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     
     
     
+
+# Modelos de Taxa de Captura ----------------------------------------------
+  #Belostomatidae
+    belo_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+                            random = ~1|bloco, data = belostomatidae, na.action = na.omit)
+    belo_cap_lme_int
     
+    summary(belo_cap_lme_int)
+    
+    Anova(belo_cap_lme_int, type = "III") #Interação sign (mas não são poucos os dados?)
+    
+    plot(belo_cap_lme_int)
+    
+    #Verificando outliers
+      plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
+    
+      shapiro.test(resid(belo_cap_lme_int))
+    
+    #Figura
+      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap1, 
+                 "Taxa de Captura []", belo_cap_lme_int) #pensar bem, estranho...
+      
+    belostomatidae %>% group_by(tratamento) %>% select(taxacap1, tratamento) %>% 
+      summarise(n = n()) #não funciona
+      
+  #Notonectidae
+    noto_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+                            random = ~1|bloco, data = notonectidae, na.action = na.omit)
+    noto_cap_lme_int   
+    
+    summary(noto_cap_lme_int) #não tem interação
+    
+    Anova(noto_cap_lme_int, type = "III")
+    
+    noto_cap_lme <- lme(log(taxacap1) ~ log(biomassa_mg) + tratamento,
+                        random = ~1|bloco, data = notonectidae, na.action = na.omit)
+    
+    summary(noto_cap_lme)
+    
+    Anova(noto_cap_lme, type = "II") #nada tem efeito
+    
+    plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = notonectidae))
+    
+    shapiro.test(resid(noto_cap_lme))
+    
+    #Figura
+      model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacap1, 
+                 "taxa de Captura []", noto_cap_lme)
+    
+# Modelos de Taxa de Consumo ----------------------------------------------
+
+
+# Modelos de Tempo de Manipulação da Presa --------------------------------
+
+
+# Modelos de sobrevivência ------------------------------------------------
+
+
+
+      
+
+# Outras análises ---------------------------------------------------------
+geral %>% group_by(tratamento) %>%  ggplot(aes(x = suborfam, y = biomassa_mg, 
+                                               fill = suborfam)) +
+        geom_boxplot() + theme_classic()
+  
+      
+ geral %>% group_by(suborfam, tratamento) %>% 
+        summarise(avg = mean(biomassa_mg), n_obs = n(),
+                  dp = sd(biomassa_mg), ep = dp/sqrt(n_obs),
+                  ic_baixo = avg - 1.96*ep,
+                  ic_cima = avg +1.96*ep) %>% 
+        ggplot(mapping = aes(x = suborfam, y = biomassa_mg, fill = tratamento))+
+        geom_errorbar(stat = "identity", mapping = aes(ymax = ic_cima, ymin = ic_baixo),
+                      position = position_dodge(width = 0.9), width = 0.5)+
+        geom_point(stat = "identity", size = 7,mapping = aes(shape = tratamento, colour = tratamento),
+                   position = position_dodge(width = 0.9)) +
+        theme_classic() + ylab("Biomassa [mg]") + scale_colour_manual(values = c("deeppink", "darkblue"))
+porvaloro      
+      

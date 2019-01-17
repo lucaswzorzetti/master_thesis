@@ -27,3 +27,17 @@
 model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
            ynome = "Taxa de Crescimento", model = belo_cresc_lme_int) +
   geom_hline(yintercept = 1, linetype = 2)
+
+#Detach package
+detach_package <- function(pkg, character.only = FALSE)
+{
+  if(!character.only)
+  {
+    pkg <- deparse(substitute(pkg))
+  }
+  search_item <- paste("package", pkg, sep = ":")
+  while(search_item %in% search())
+  {
+    detach(search_item, unload = TRUE, character.only = TRUE)
+  }
+}
