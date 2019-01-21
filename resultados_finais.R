@@ -439,8 +439,81 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
                    "Taxa de consumo [individuo/dia/mg predador]", geral_pres_lme_int)
     
 # Modelos de Tempo de Manipulação da Presa --------------------------------
-
-
+  #Belostomatidae - não pode tempo de manip - não foi medido
+       
+  #Notonectidae
+        noto_temp_lme_int <- lme(log(tempomanip1) ~ log(biomassa_mg)*tratamento,
+                                 random = ~1|bloco, data = notonectidae,
+                                 na.action = na.omit)
+        summary(noto_temp_lme_int) #sem interação
+        
+        Anova(noto_temp_lme_int, type = "III")
+        
+        noto_temp_lme <- lme(log(tempomanip1) ~ log(biomassa_mg) + tratamento,
+                             random = ~1|bloco, data = notonectidae,
+                             na.action = na.omit)
+        
+        summary(noto_temp_lme)
+        
+        Anova(noto_temp_lme)
+        
+        plot(lm(log(tempomanip1) ~ log(biomassa_mg) + tratamento, data = notonectidae))
+        
+        shapiro.test(resid(noto_temp_lme))
+        
+        
+          #Figura
+            model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$tempomanip1,
+                       "Tempo de manipulação da presa [segundos]",
+                       noto_temp_lme)
+  #Anisoptera
+    aniso_temp_lme_int <- lme(log(tempomanip1) ~ log(biomassa_mg)*tratamento,
+                              random = ~1|bloco, data = anisoptera,
+                              na.action = na.omit)
+    summary(aniso_temp_lme_int)  #sem interação
+    
+    Anova(aniso_temp_lme_int, type = "III")
+    
+    aniso_temp_lme <- lme(log(tempomanip1) ~ log(biomassa_mg) + tratamento,
+                          random = ~1|bloco, data = anisoptera,
+                          na.action = na.omit)
+    summary(aniso_temp_lme)
+    
+    Anova(aniso_temp_lme, type = "II")
+    
+    plot(lm(log(tempomanip1) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+            
+    shapiro.test(resid(aniso_temp_lme))    
+    
+      #Figura
+        model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$tempomanip1,
+                   "Tempo de manipulação da presa [segundos]",
+                   aniso_temp_lme)
+        
+  #Zygoptera
+    zygo_temp_lme_int <- lme(log(tempomanip1) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = zygoptera,
+                             na.action = na.omit)
+    summary(zygo_temp_lme_int) #sem interação
+    
+    Anova(zygo_temp_lme_int, type = "III")
+    
+    zygo_temp_lme <- lme(log(tempomanip1) ~ log(biomassa_mg) +tratamento,
+                             random = ~1|bloco, data = zygoptera,
+                             na.action = na.omit)
+    summary(zygo_temp_lme)
+    
+    Anova(zygo_temp_lme, type = "II")
+    
+    plot(lm(log(tempomanip1) ~ log(biomassa_mg) +tratamento, data = zygoptera))
+    
+    shapiro.test(resid(zygo_temp_lme))
+    
+      #Figura
+        model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$tempomanip1,
+                   "Tempo de manipulação da presa [segundos]",
+                   zygo_temp_lme)
+    
 # Modelos de sobrevivência ------------------------------------------------
 
 
