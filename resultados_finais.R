@@ -515,7 +515,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
                    zygo_temp_lme)
     
 # Modelos de sobrevivência ------------------------------------------------
-
+ggdensity(data = geral, x = geral$sobrev, fill = geral$tratamento)
 
 
       
