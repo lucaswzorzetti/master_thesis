@@ -126,7 +126,9 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     
     noto_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
                           weights = varIdent(form = ~ 1 | tratamento),
-                          random = ~1|bloco, data = notonectidae)
+                          random = ~1|bloco, data = notonectidae, na.action = na.omit)
+    noto_cresc_lme_semtrat <- lme(log(taxacrescimento) ~ log(biomassa_mg),
+                                  random = ~1|bloco, data = notonectidae, na.action = na.omit)
     
     summary(noto_cresc_lme)
     
@@ -148,6 +150,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
                  "Taxa de Crescimento [proporção] em escala logaritmica", 
                  model = noto_cresc_lme)+
         geom_hline(yintercept = 1, linetype = 2)
+      noto_cresc
     
     
   # Anisoptera --------------------------------------------------------------
@@ -161,7 +164,9 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     
     aniso_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
                            random = ~1|bloco,
-                           data = anisoptera)
+                           data = anisoptera, na.action = na.omit,
+                           weights = varIdent(form = ~ 1 | tratamento))
+    plot(aniso_cresc_lme)
     
     summary(aniso_cresc_lme) #apenas biomassa e o intercepto significativos
     
@@ -327,13 +332,13 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
      
 # Modelos de Taxa de Consumo (total presas corrigido) ----------------------------------------------
   #Belostomatidae
-    belo_pres_lme_int <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg)*tratamento,
-                             random = ~1|bloco, data = belostomatidae)
+    belo_pres_lme_int <- lme(totalpresasperdiamg ~ biomassa_mg*tratamento,
+                             random = ~1|bloco, data = belostomatidae, na.action = na.omit)
     summary(belo_pres_lme_int) #inter não significativa
     
     Anova(belo_pres_lme_int, type = "III")
       
-    belo_pres_lme <-  lme(log(totalpresasperdiamg) ~ log(biomassa_mg) + tratamento,
+    belo_pres_lme <-  lme(totalpresasperdiamg ~ biomassa_mg + tratamento,
                           random = ~1|bloco, data = belostomatidae) 
     summary(belo_pres_lme)
     
@@ -344,7 +349,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     shapiro.test(resid(belo_pres_lme)) #bem normal
     
     #figura
-      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$totalpresasperdiamg,
+      model_line2(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$totalpresasperdiamg,
                  "Número de Presas Consumidas / dia", belo_pres_lme)
       
   #Notonectidae
@@ -368,6 +373,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
       notonectidae$totalpresasperdiamg[16] <- NA
       notonectidae$totalpresasperdiamg[8] <- NA
       
+      sqrt(0.0001)
         #Figura
           model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$totalpresasperdiamg,
                     "Total de Presas consumidas/dia", noto_pres_lme)
