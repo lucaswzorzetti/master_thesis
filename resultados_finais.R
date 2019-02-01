@@ -371,6 +371,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
         #Figura
           model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$totalpresasperdiamg,
                     "Total de Presas consumidas/dia", noto_pres_lme)
+          adf
       
   #Anisoptera
     aniso_pres_lme_int <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg)*tratamento,
