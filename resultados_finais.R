@@ -15,8 +15,15 @@
     library(car)
 
   #Importing and wrangling data
-    geral <- read.table("planilhageral.txt", header = T)
+    geral <- read.table("planilhageral_atualizada.txt", header = T, colClasses = c(
+      "factor", "factor","factor","factor","character", "numeric", "numeric","numeric",
+      "numeric","numeric","numeric","factor", "numeric","numeric","numeric","numeric",
+      "numeric", "logical", "integer", "integer", "numeric","numeric","numeric","numeric",
+      "numeric","numeric"
+    ))
     View(geral)
+    str(geral)
+    
     
     geral <- mutate(geral, taxacrescimento = 
                       (((varbiom+biomassant)/biomassant)^(1/sobrev))) #taxa de crescimento
@@ -32,6 +39,8 @@
                               #biomassa com equações alometricas de Benke et al 1999
     geral <- geral %>% mutate(biomassa_mg = biomassant*1000)
     geral <- geral %>% mutate(totalpresasperdiamg = Totalpresascorrigido/biomassa_mg)
+    geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor),
+                              taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
     
     View(geral)
   
@@ -44,13 +53,20 @@
 
 # Equações alometricas ----------------------------------------------------
 #Extraindo equações alometricas
-alo_belo <- lm(biomassant ~ I(compr*larg*pi), data = belostomatidae)
+alo_belo <- lm(log(biomassant) ~ log(compr), data = belostomatidae)
 alo_belo
 
 summary(alo_belo)
 plot(alo_belo)
 belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_smooth(method = "lm")
 
+geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shape = suborfam)) +
+  geom_smooth(method = "lm") +
+  geom_point(aes(fill=factor(suborfam)), size=3) +
+  theme_classic() + ylab("Log(Biomassa)") +
+  xlab("Log(Comprimento)") + 
+  scale_x_continuous(limits = c(-1.1, 1), breaks = seq(-2, 2, by = 0.5))+
+  scale_y_continuous(limits = c(1, 6), breaks = seq(0, 6, by = 0.5))
 
 # Modelos de taxa de crescimento ------------------------------------------
   #Distribuição de frequencia
@@ -243,30 +259,30 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
 
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
-    belo_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+    belo_cap_lme_int <- lme(log(taxacap_hor_NA) ~ log(biomassa_mg)*tratamento,
                             random = ~1|bloco, data = belostomatidae, na.action = na.omit)
     belo_cap_lme_int
     
     summary(belo_cap_lme_int)
     
-    Anova(belo_cap_lme_int, type = "III") #Interação sign (mas não são poucos os dados?)
+    Anova(belo_cap_lme_int, type = "III") #sem interação
     
     plot(belo_cap_lme_int)
     
     #Verificando outliers
-      plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
+      plot(lm(log(taxacap_hor_NA) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
     
       shapiro.test(resid(belo_cap_lme_int))
     
     #Figura
-      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap1, 
+      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap_hor_NA, 
                  "Taxa de Captura []", belo_cap_lme_int) #pensar bem, estranho...
       
     belostomatidae %>% group_by(tratamento) %>% select(taxacap1, tratamento) %>% 
       summarise(n = n()) #não funciona
       
   #Notonectidae
-    noto_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+    noto_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
                             random = ~1|bloco, data = notonectidae, na.action = na.omit)
     noto_cap_lme_int   
     
@@ -274,7 +290,7 @@ belostomatidae %>% ggplot(aes(x = compr, y = biomassant)) + geom_point() + geom_
     
     Anova(noto_cap_lme_int, type = "III")
     
-    noto_cap_lme <- lme(log(taxacap1) ~ log(biomassa_mg) + tratamento,
+    noto_cap_lme <- lme(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento,
                         random = ~1|bloco, data = notonectidae, na.action = na.omit)
     
     summary(noto_cap_lme)
