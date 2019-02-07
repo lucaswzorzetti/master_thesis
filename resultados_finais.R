@@ -13,6 +13,7 @@
     library(RVAideMemoire)
     library(nlme)
     library(car)
+    library(MuMIn)
 
   #Importing and wrangling data
     geral <- read.table("planilhageral_atualizada.txt", header = T, colClasses = c(
@@ -39,8 +40,9 @@
                               #biomassa com equações alometricas de Benke et al 1999
     geral <- geral %>% mutate(biomassa_mg = biomassant*1000)
     geral <- geral %>% mutate(totalpresasperdiamg = Totalpresascorrigido/biomassa_mg)
-    geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor),
-                              taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
+    geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor), #colocando NAs para facilitar analise
+                              taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min),
+                              consumo1dia_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
     
     View(geral)
   
@@ -260,12 +262,13 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
     belo_cap_lme_int <- lme(log(taxacap_hor_NA) ~ log(biomassa_mg)*tratamento,
-                            random = ~1|bloco, data = belostomatidae, na.action = na.omit)
+                            random = ~1|bloco, data = belostomatidae,
+                            na.action = na.omit)
     belo_cap_lme_int
     
     summary(belo_cap_lme_int)
     
-    Anova(belo_cap_lme_int, type = "III") #sem interação
+    Anova(belo_cap_lme_int, type = "III") #com interação
     
     plot(belo_cap_lme_int)
     
@@ -290,30 +293,58 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     Anova(noto_cap_lme_int, type = "III")
     
+    noto_cap_lme_int_r2 <- r.squaredGLMM(noto_cap_lme_int)
+    
     noto_cap_lme <- lme(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento,
                         random = ~1|bloco, data = notonectidae, na.action = na.omit)
     
     summary(noto_cap_lme)
     
-    Anova(noto_cap_lme, type = "II") #nada tem efeito
+    Anova(noto_cap_lme, type = "II") #a biomassa tem efeito
     
-    plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = notonectidae))
+    plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = notonectidae))
     
     shapiro.test(resid(noto_cap_lme))
+    
+    notonectidae$taxacap_min_NA[13] <- NA #outlier
+    
+    noto_cap_lme_r2 <- r.squaredGLMM(noto_cap_lme)
+    
+    noto_cap_lme_min <- lme(log(taxacap_min_NA) ~ log(biomassa_mg),
+                            random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                            weights = varIdent(form = ~ 1 | tratamento))
+    summary(noto_cap_lme_min)
+    
+    shapiro.test(resid(noto_cap_lme_min))
+    
+    plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg), data = notonectidae))
+    
+    noto_cap_lme_min_r2 <- r.squaredGLMM(noto_cap_lme_min)
     
     #Figura
       model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacap1, 
                  "taxa de Captura []", noto_cap_lme)
       
+    #Tabela com os modelos Usar como modelo de tabela para os outros
+      stargazer( noto_cap_lme_int, noto_cap_lme, noto_cap_lme_min, align = TRUE,
+                title = "Notonectidae Regression Model results", ci = TRUE,
+                ci.level = 0.90, 
+                column.labels = c("Interaction", "Biomass + Treatment", "Only Biomass"),
+                type = "text", add.lines = list(c("R² marginal", round(noto_cap_lme_int_r2[1,1], digits = 4),
+                                                  round(noto_cap_lme_r2[1,1], digits = 4), round(noto_cap_lme_min_r2[1,1], digits = 4)),
+                                                c("R² conditional", round(noto_cap_lme_int_r2[1,2], digits = 4),
+                                                  round(noto_cap_lme_r2[1,2], digits = 4), round(noto_cap_lme_min_r2[1,2], digits = 4))))
+      
   #Anisoptera
-    aniso_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+    aniso_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
                              random = ~1|bloco, data = anisoptera, na.action = na.omit)
 
-    summary(aniso_cap_lme_int) #interação significativa
+    summary(aniso_cap_lme_int) #interação marginalmente significativa
     
     Anova(aniso_cap_lme_int, type = "III")
+    plot(aniso_cap_lme_int)
     
-    plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+    plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = anisoptera))
     
     shapiro.test(resid(aniso_cap_lme_int))
     
@@ -323,7 +354,7 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                  aniso_cap_lme_int)
     
   #Zygoptera
-    zygo_cap_lme_int <- lme(log(taxacap1) ~ log(biomassa_mg)*tratamento,
+    zygo_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
                             random = ~1|bloco, data = zygoptera, na.action = na.omit)
 
     zygo_cap_lme_int
@@ -331,14 +362,18 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     Anova(zygo_cap_lme_int, type = "III")
     
-    zygo_cap_lme <- lme(log(taxacap1) ~ log(biomassa_mg) + tratamento,
+    shapiro.test(resid(zygo_cap_lme_int))
+    
+    zygo_cap_lme <- lme(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento,
                         random = ~1|bloco, data = zygoptera, na.action = na.omit)
     
      summary(zygo_cap_lme)   
      
-     Anova(zygo_cap_lme, type = "II") #nada significativo
+     Anova(zygo_cap_lme, type = "II") #biomassa significativo
      
-     plot(lm(log(taxacap1) ~ log(biomassa_mg) + tratamento, data = zygoptera))
+     plot(zygo_cap_lme)
+     
+     plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = zygoptera))
      
      shapiro.test(resid(zygo_cap_lme))
      
@@ -541,6 +576,63 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
 ggdensity(data = geral, x = geral$sobrev, fill = geral$tratamento)
 
 
+# Modelos de Taxa de Consumo inicial com base em biomassa --------------------------------------
+###Belostomatidae
+        belo_cons_lme_int <- lme(log(consumo1dia_NA) ~ log(biomassa_mg)*tratamento,
+                                     random = ~1|bloco, data = belostomatidae,
+                                   na.action = na.omit)
+        summary(belo_cons_lme_int)
+        
+        Anova(belo_cons_lme_int, type = "III") #Não sei o que fazer nesse caso, como usarei zero?
+        
+###Notonectidae
+        noto_cons_lme_int <- lme(log(consumo1dia_NA) ~ log(biomassa_mg)*tratamento,
+                                 random = ~1|bloco, data = notonectidae,
+                                 na.action = na.omit, 
+                                 weights = varIdent(form = ~ 1 | tratamento))
+        summary(noto_cons_lme_int)
+        
+        Anova(noto_cons_lme_int, type = "III")
+        
+        
+        noto_cons_lme <- lme(log(consumo1dia_NA) ~ log(biomassa_mg)+tratamento,
+                                 random = ~1|bloco, data = notonectidae,
+                                 na.action = na.omit, 
+                                 weights = varIdent(form = ~ 1 | tratamento))
+        summary(noto_cons_lme)
+        
+        Anova(noto_cons_lme, type = "II")
+        
+        shapiro.test(resid(noto_cons_lme))
+        
+        plot(noto_cons_lme)
+        
+###Anisoptera
+        aniso_cons_lme_int <- lme(log(consumo1dia_NA) ~ log(biomassa_mg)*tratamento,
+                                  random = ~1|bloco, data = anisoptera,
+                                  na.action = na.omit, 
+                                  weights = varIdent(form = ~ 1 | tratamento))
+        summary(aniso_cons_lme_int)
+        
+        Anova(aniso_cons_lme_int, type = "III") #Marginalmente significativa inter
+        
+        plot(aniso_cons_lme_int)
+        
+        shapiro.test(resid(aniso_cons_lme_int))
+        
+###Zygoptera
+        zygo_cons_lme_int <- lme(log(consumo1dia_NA) ~ log(biomassa_mg)*tratamento,
+                                 random = ~1|bloco, data = anisoptera,
+                                 na.action = na.omit, 
+                                 weights = varIdent(form = ~ 1 | tratamento))
+        summary(zygo_cons_lme_int)
+        
+        Anova(zygo_cons_lme_int, type = "III") #inter marginalmente signif
+        
+        plot(zygo_cons_lme_int)
+        
+        shapiro.test(resid(zygo_cons_lme_int))
+        
       
 
 # Outras análises ---------------------------------------------------------
