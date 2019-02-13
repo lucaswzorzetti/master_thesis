@@ -14,6 +14,7 @@
     library(nlme)
     library(car)
     library(MuMIn)
+    library(scales)
 
   #Importing and wrangling data
     geral <- read.table("planilhageral_atualizada.txt", header = T, colClasses = c(
@@ -124,11 +125,19 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       
       #Figura do modelo
         belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
-                                  ynome = "Taxa de Crescimento [proporção] em escala logaritmica", model = belo_cresc_lme_int) +
+                                  ynome = "Growth rate, log10 scale", model = belo_cresc_lme_int) +
           geom_hline(yintercept = 1, linetype = 2)
         belo_cresc 
         
         plotresid(belo_cresc_lme_int)
+        
+        jpeg(filename = "growth_belos.jpg", width = 2300, height = 1900, 
+        units = "px", pointsize = 12, quality = 100,
+        bg = "white",  res = 300)
+        belo_cresc
+        dev.off()
+        
+        png(filename = "growth_rate_belostomatide.png", res = 600, width = 480, height = 480)
       
       #Testes de normalidade dos residuos
         shapiro.test(resid(belo_cresc_lme_int))
@@ -149,9 +158,11 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                                   random = ~1|bloco, data = notonectidae, na.action = na.omit)
     
     summary(noto_cresc_lme)
+    summary(noto_cresc_lme_semtrat)
     
     Anova(noto_cresc_lme, type = "II") #apenas biomassa significativa
-
+    
+    
     plot(noto_cresc_lme)
     
     #verificando outliers
