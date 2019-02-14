@@ -22,7 +22,8 @@
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
       theme(axis.title.x = element_text(size = 20, face = "bold"),
             axis.title.y=element_text(size=20, face = "bold"))+
-      theme(axis.text = element_text(color = "black",size = rel(1.3)))
+      theme(axis.text = element_text(color = "black",size = rel(1.3)))+
+      theme(legend.position = c(0.8, 0.8))
   } 
 
 #teste
