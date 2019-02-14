@@ -141,6 +141,28 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       
       #Testes de normalidade dos residuos
         shapiro.test(resid(belo_cresc_lme_int))
+        
+        #Tabela
+        belo_cresc_lme_int_r2 <- r.squaredGLMM(belo_cresc_lme_int)
+        stargazer( belo_cresc_lme_int, align = TRUE,
+                   title = "Belostomatidae Growth Rate Model results", ci = TRUE,
+                   ci.level = 0.95, 
+                   column.labels = c("Interaction", "Biomass + Treatment",
+                                     "Only Biomass"),
+                   type = "text", add.lines = list(c("R² marginal",
+                                                     round(belo_cresc_lme_int_r2[1,1],
+                                                           digits = 4),
+                                                     round(belo_cresc_lme_int_r2[1,1],
+                                                           digits = 4),
+                                                     round(belo_cresc_lme_int_r2[1,1],
+                                                           digits = 4)),
+                                                   c("R² conditional",
+                                                     round(belo_cresc_lme_int_r2[1,2], 
+                                                           digits = 4),
+                                                     round(belo_cresc_lme_int_r2[1,2],
+                                                           digits = 4),
+                                                     round(belo_cresc_lme_int_r2[1,2],
+                                                           digits = 4))))
 
 
   # Notonectidae ------------------------------------------------------------
