@@ -6,15 +6,17 @@
                                        y=yaxis, fill=tratamento,
                                                 shape = tratamento))+
       geom_smooth(method = "lm") + 
-      geom_point(aes(fill=factor(tratamento, labels=c("Ambiente", "Aquecido"))),
+      geom_point(aes(fill=factor(tratamento)),
                  size=5) +
-      scale_fill_manual(values = c("#66cc33","#cc0000"))+
-      scale_x_continuous(trans = "log")+
-      scale_y_continuous(trans = "log")+
+      scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
+      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x, n = 10),
+                    labels = trans_format("log10", math_format(10^.x)))+
+      scale_y_log10(breaks = round(seq(0.91, to = max(yaxis), length.out = 6), digits = 2),
+                    labels = round(seq(0.91, to = max(yaxis), length.out = 6), digits = 2))+
       ylab(ynome)+
-      xlab("Tamanho corporal [mg] em escala logaritmica")+
-      labs(fill = "Tratamento", shape = "Tratamento")+
-      theme_classic()+ scale_shape_manual(values = c(21, 22)) +
+      xlab("Body Size [mg], log10 scale")+
+      labs(fill = "Treatment", shape = "Treatment")+
+      theme_classic()+ scale_shape_manual(values = c(21, 22), labels = c("Ambient", "Warmed")) +
       theme(legend.title = element_text(size=20, face = "bold"))+
       theme(legend.text = element_text(size=12))+
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
