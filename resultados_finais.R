@@ -114,7 +114,7 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       belo_cresc_lme_int <-  lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento,
                                  random = ~1|bloco,
                                  weights = varIdent(form = ~ 1 | tratamento),
-                                 data = belostomatidae)
+                                 data = belostomatidae, na.action = na.omit)
 
       summary(belo_cresc_lme_int) # interação significativa -> o efeito do tam corp 
                             # na tax cresc é diferente entre os tratamentos
@@ -124,14 +124,17 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       plot(belo_cresc_lme_int)
       
       #Figura do modelo
-        belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
-                                  ynome = "Growth rate, log10 scale", model = belo_cresc_lme_int) +
+        belo_cresc <-  model_line(belostomatidae, belostomatidae$biomassa_mg, 
+                                  belostomatidae$taxacrescimento,
+                                  ynome = "Growth rate, log10 scale", 
+                                  model = belo_cresc_lme_int,
+                                  title = "Belostomatidae") +
           geom_hline(yintercept = 1, linetype = 2)
         belo_cresc 
         
         plotresid(belo_cresc_lme_int)
         
-        jpeg(filename = "growth_belos.jpg", width = 2300, height = 1900, 
+        jpeg(filename = "growth_belos.jpg", width = 2350, height = 1900, 
         units = "px", pointsize = 12, quality = 100,
         bg = "white",  res = 300)
         belo_cresc
@@ -198,11 +201,17 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     #Figura
       noto_cresc <- model_line(notonectidae, notonectidae$biomassa_mg,
                                notonectidae$taxacrescimento,
-                 "Taxa de Crescimento [proporção] em escala logaritmica", 
-                 model = noto_cresc_lme)+
+                 "Growth rate, log10 scale", 
+                 model = noto_cresc_lme,
+                 title = "Notonectidae")+
         geom_hline(yintercept = 1, linetype = 2)
       noto_cresc
-    
+      
+      jpeg(filename = "growth_noto.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      noto_cresc
+      dev.off()
     
   # Anisoptera --------------------------------------------------------------
   
