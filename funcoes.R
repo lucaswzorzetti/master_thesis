@@ -24,7 +24,7 @@
       theme(axis.title.x = element_text(size = 20, face = "bold"),
             axis.title.y=element_text(size=20, face = "bold"))+
       theme(axis.text = element_text(color = "black",size = rel(1.3)))+
-      theme(legend.position = c(0.8, 0.8))+
+      theme(legend.position = c(0.8, 0.8), legend.background = element_rect(fill="transparent"))+
       theme(plot.title = element_text(face = "bold", size = 20, hjust = 0.5))
   } 
 

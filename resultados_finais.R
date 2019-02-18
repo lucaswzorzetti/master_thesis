@@ -15,6 +15,7 @@
     library(car)
     library(MuMIn)
     library(scales)
+    library(knitr)
 
   #Importing and wrangling data
     geral <- read.table("planilhageral_atualizada.txt", header = T, colClasses = c(
@@ -119,7 +120,8 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       summary(belo_cresc_lme_int) # interação significativa -> o efeito do tam corp 
                             # na tax cresc é diferente entre os tratamentos
       
-      Anova(belo_cresc_lme_int, type = "III") #III é porque tem interação
+      belo_cresc_anova <- Anova(belo_cresc_lme_int, type = "III") #III é porque tem interação
+      belo_cresc_anova
 
       plot(belo_cresc_lme_int)
       
@@ -185,7 +187,8 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     summary(noto_cresc_lme)
     summary(noto_cresc_lme_semtrat)
     
-    Anova(noto_cresc_lme, type = "II") #apenas biomassa significativa
+    noto_cresc_anova <- Anova(noto_cresc_lme, type = "II") #apenas biomassa significativa
+    noto_cresc_anova
     
     
     plot(noto_cresc_lme)
@@ -230,7 +233,8 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     summary(aniso_cresc_lme) #apenas biomassa e o intercepto significativos
     
-    Anova(aniso_cresc_lme, type = "II") 
+    aniso_cresc_anova <- Anova(aniso_cresc_lme, type = "II") 
+    aniso_cresc_anova
     
     #verificando outliers
       plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = anisoptera))
@@ -242,10 +246,17 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     #figura
       aniso_cresc <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$taxacrescimento, 
-                 "Taxa de Crescimento [proporção] em escala logaritmica",
-                 model = aniso_cresc_lme)+
+                 "Growth rate, log10 scale",
+                 model = aniso_cresc_lme,
+                 title = "Anisoptera")+
         geom_hline(yintercept = 1, linetype = 2)
       aniso_cresc 
+      
+      jpeg(filename = "growth_aniso.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      aniso_cresc
+      dev.off()
       
     
   # Zygoptera ---------------------------------------------------------------
@@ -257,50 +268,120 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     Anova(zygo_cresc_lme_int, type = "III")
     
     zygo_cresc_lme <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento,
-                              random = ~1|bloco, data = zygoptera)
+                              random = ~1|bloco, data = zygoptera,
+                          weights = varIdent(form = ~ 1 | tratamento),
+                          na.action = na.omit)
+                          
     summary(zygo_cresc_lme)
     
-    Anova(zygo_cresc_lme, type = "II")
+    zygo_cresc_anova <- Anova(zygo_cresc_lme, type = "II")
+    zygo_cresc_anova
     
     #verificando outliers
     plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento, data = zygoptera))
     
     zygoptera$taxacrescimento[24] <- NA
+    zygoptera$taxacrescimento[32] <- NA
     
     shapiro.test(resid(zygo_cresc_lme)) #no qqplot parece normal, mas o teste não confirma isso
     
+    plot(zygo_cresc_lme)
+    
     #Figura
-    model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$taxacrescimento, 
-               "Taxa de Crescimento [proporção] em escala logaritmica", zygo_cresc_lme)+
+    zygo_cresc <- model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$taxacrescimento, 
+               "Growth rate, log10 scale",
+               zygo_cresc_lme, "Zygoptera")+
       geom_hline(yintercept = 1, linetype = 2)
+    zygo_cresc
+    
+    jpeg(filename = "growth_zygo.jpg", width = 2350, height = 1900, 
+         units = "px", pointsize = 12, quality = 100,
+         bg = "white",  res = 300)
+    zygo_cresc
+    dev.off()
     
 
   # Geral -------------------------------------------------------------------
     geral_cresc_lme_int <- lme(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + 
                                  log(biomassa_mg)*suborfam,
-                               random = ~1|bloco, data = geral) #add efeito do taxon depois
+                               random = ~1|bloco, data = geral,
+                               weights = varIdent(form = ~ 1 | tratamento),
+                               na.action = na.omit) #add efeito do taxon depois
     summary(geral_cresc_lme_int) #sem interação
     Anova(geral_cresc_lme_int, type = "III")
     
-    geral_cresc_lme_int2 <- lme(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + 
-                                 log(biomassa_mg)*suborfam,
-                               random = ~1|bloco, data = geral)
+    geral_cresc_lme_int2 <- lme(log(taxacrescimento) ~ log(biomassa_mg) +
+                                  tratamento + suborfam,
+                               random = ~1|bloco, data = geral,
+                               weights = varIdent(form = ~ 1 | tratamento),
+                               na.action = na.omit)
     summary(geral_cresc_lme_int2)
     
     Anova(geral_cresc_lme_int2, type = "III")
     
     plot(geral_cresc_lme_int2)
     
+    shapiro.test(resid(geral_cresc_lme_int2)) #nem um pouco normal
     
+    plot(lm(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + suborfam, data = geral))
     
     #figura
     model_line(geral,  geral$biomassa_mg, geral$taxacrescimento, 
-               "Taxa de Crescimento [proporção] em escala logaritmica", geral_cresc_lme_int2)+
+               "Growth rate, log10 scale", geral_cresc_lme_int2)+
       geom_hline(yintercept = 1, linetype = 2)
     
     
+#Tabela comparativa dos modelos de taxa de crescimento
+    #os modelos de cada são:
+    belo_cresc_lme_int
+    noto_cresc_lme
+    aniso_cresc_lme
+    zygo_cresc_lme
     
-
+    #R2 para lme
+    belo_cresc_lme_int_r2 <- r.squaredGLMM(belo_cresc_lme_int)
+    noto_cresc_lme_int_r2 <- r.squaredGLMM(noto_cresc_lme_int)
+    aniso_cresc_lme_int_r2 <- r.squaredGLMM(aniso_cresc_lme_int)
+    zygo_cresc_lme_int_r2 <- r.squaredGLMM(zygo_cresc_lme_int)
+    
+    #tabela comparativa dos modelos
+    stargazer( belo_cresc_lme_int, noto_cresc_lme,
+               aniso_cresc_lme, zygo_cresc_lme,
+               align = TRUE,
+               title = "Growth Rate Model results", ci = TRUE,
+               ci.level = 0.90, model.numbers = FALSE,
+               notes = "Confidence Interval of 90 percent",
+               column.labels = c("Belostomatidae", "Notonectidae",
+                                 "Anisoptera", "Zygoptera"),
+               covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                    "Log(Biomass) : Treatment",
+                                    "Constant"), 
+               dep.var.labels = "Log(Growth rate)",
+               add.lines = list(c("R² marginal",
+                                  round(belo_cresc_lme_int_r2[1,1],
+                                        digits = 4),
+                                  round(noto_cresc_lme_int_r2[1,1],
+                                        digits = 4),
+                                  round(aniso_cresc_lme_int_r2[1,1],
+                                        digits = 4),
+                                  round(zygo_cresc_lme_int_r2[1,1],
+                                        digits = 4)),
+                                c("R² conditional",
+                                  round(belo_cresc_lme_int_r2[1,2], 
+                                        digits = 4),
+                                  round(noto_cresc_lme_int_r2[1,2],
+                                        digits = 4),
+                                  round(aniso_cresc_lme_int_r2[1,2],
+                                        digits = 4),
+                                  round(zygo_cresc_lme_int_r2[1,2],
+                                        digits = 4))))
+    #Tabela de Anovas
+    stargazer( belo_cresc_anova, noto_cresc_anova,
+               aniso_cresc_anova, zygo_cresc_anova,
+               type = "text",
+               align = TRUE)
+    stargazer(summary(belo_cresc_lme_int))
+    
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
     belo_cap_lme_int <- lme(log(taxacap_hor_NA) ~ log(biomassa_mg)*tratamento,
