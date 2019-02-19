@@ -16,6 +16,7 @@
     library(MuMIn)
     library(scales)
     library(knitr)
+    library(MASS)
 
   #Importing and wrangling data
     geral <- read.table("planilhageral_atualizada.txt", header = T, colClasses = c(
@@ -45,6 +46,9 @@
     geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor), #colocando NAs para facilitar analise
                               taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min),
                               consumo1dia_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
+    geral <- geral %>% group_by(amostra) %>%  mutate(capturas =   #numero de capturas em 1h30min
+                                                       sum(!is.na(tempocap1),
+                                                       !is.na(tempocap2),!is.na(tempocap3)))
     
     View(geral)
   
@@ -384,28 +388,51 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
-    belo_cap_lme_int <- lme(log(taxacap_hor_NA) ~ log(biomassa_mg)*tratamento,
-                            random = ~1|bloco, data = belostomatidae,
-                            na.action = na.omit)
-    belo_cap_lme_int
+    belo_cap_glmm_int <- glmer((log(taxacap_hor + 1)+1) ~ log(biomassa_mg)*tratamento +
+                            (1|bloco), data = belostomatidae, family = Gamma)
+    belo_cap_glmm_int
     
-    summary(belo_cap_lme_int)
+    summary(belo_cap_glmm_int)
     
-    Anova(belo_cap_lme_int, type = "III") #com interação
+    Anova(belo_cap_glmm_int, type = "III") #com interação
     
-    plot(belo_cap_lme_int)
+    plot(belo_cap_glmm_int)
+    
+    #sem inter
+    belo_cap_glmm <- glmer((log(taxacap_hor + 1)+1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                           data = belostomatidae, family = Gamma)
+    summary(belo_cap_glmm)
+    
+    Anova(belo_cap_glmm, type = "II")
+    
+    r.squaredGLMM(belo_cap_glmm)
     
     #Verificando outliers
       plot(lm(log(taxacap_hor_NA) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
-    
+      
       shapiro.test(resid(belo_cap_lme_int))
+      
+    #Glmm para capturas
+      belo_cap_glmm_int <- glmer(capturas ~ log(biomassa_mg)*tratamento + (1|bloco),
+                              data = belostomatidae, family = poisson)
+      summary(belo_cap_glmm_int)
+      
+      Anova(belo_cap_glmm_int, type = "III")
+      
+      belo_cap_glmm<- glmer(capturas ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                 data = belostomatidae, family = poisson)
+      summary(belo_cap_glmm)
+      
+      Anova(belo_cap_glmm, type = "II")
     
     #Figura
-      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap_hor_NA, 
-                 "Taxa de Captura []", belo_cap_lme_int) #pensar bem, estranho...
+      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap_hor, 
+                 "Capture rate [Captures/hour], log10 scale", belo_cap_lme_int,
+                 title = "Belostomatidae") #pensar bem, estranho...
+    
       
-    belostomatidae %>% group_by(tratamento) %>% select(taxacap1, tratamento) %>% 
-      summarise(n = n()) #não funciona
+    
+    
       
   #Notonectidae
     noto_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
@@ -503,6 +530,39 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
      #Figura
       model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$taxacap1, 
                  "Taxa de Captura []", zygo_cap_lme)
+      
+  #Geral
+      #Proporções  
+      proporcao <- geral %>% group_by(tratamento, suborfam) %>% 
+        filter(!is.na(taxacap1eq)) %>% summarise(n = n(), proportion = (n/15)*100) %>% 
+        ggplot(aes(x = tratamento, y = proportion, fill = tratamento)) + geom_col(color = "black") + 
+        facet_grid(cols = vars(suborfam)) + theme_classic() + 
+        theme(axis.text.x.bottom = element_blank(), axis.title.x = element_blank(),
+              legend.title = element_text(face = "bold", size =25),
+              axis.line.x = element_blank(), axis.ticks.x = element_blank(),
+              strip.text = element_text(face = "bold", size = 15),
+              axis.title.y = element_text(face = "bold", size = 15),
+              axis.text.y = element_text(colour = "black", size = 15),
+              legend.text = element_text(size = 18),
+              legend.position = c(0.4, 0.8))+
+        expand_limits(y = 100)+
+        labs(fill = "Treatment") + scale_fill_manual(values = c("#66cc33","#cc0000"),
+                                                     labels = c("Ambient", "Warmed"))+
+        scale_y_continuous(breaks = seq(0, 100, length.out = 9),
+                           labels = c("0", "12.5 %", "25 %", "37.5 %", "50 %", "62.5 %",
+                                      "75 %", "87.5%", "100 %"))+
+        ylab("Predators that eat a Prey on the first day")+
+        geom_hline(yintercept = 0, linetype = 2) + geom_hline(yintercept = 100, linetype = 2)
+      proporcao
+      
+      #salvando figura
+      jpeg(filename = "proporcao_captura.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      proporcao
+      dev.off()
+      
+      
      
 # Modelos de Taxa de Consumo (total presas corrigido) ----------------------------------------------
   #Belostomatidae
