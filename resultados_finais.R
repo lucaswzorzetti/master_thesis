@@ -11,6 +11,7 @@
     library(lmtest)
     library(stargazer) #para tabelas
     library(RVAideMemoire)
+    library(fitdistrplus)
     library(nlme)
     library(car)
     library(MuMIn)
@@ -344,14 +345,15 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     #R2 para lme
     belo_cresc_lme_int_r2 <- r.squaredGLMM(belo_cresc_lme_int)
-    noto_cresc_lme_int_r2 <- r.squaredGLMM(noto_cresc_lme_int)
-    aniso_cresc_lme_int_r2 <- r.squaredGLMM(aniso_cresc_lme_int)
-    zygo_cresc_lme_int_r2 <- r.squaredGLMM(zygo_cresc_lme_int)
+    noto_cresc_lme_r2 <- r.squaredGLMM(noto_cresc_lme)
+    aniso_cresc_lme_r2 <- r.squaredGLMM(aniso_cresc_lme)
+    zygo_cresc_lme_r2 <- r.squaredGLMM(zygo_cresc_lme)
     
     #tabela comparativa dos modelos
     stargazer( belo_cresc_lme_int, noto_cresc_lme,
                aniso_cresc_lme, zygo_cresc_lme,
                align = TRUE,
+               type = "text",
                title = "Growth Rate Model results", ci = TRUE,
                ci.level = 0.90, model.numbers = FALSE,
                notes = "Confidence Interval of 90 percent",
@@ -364,20 +366,20 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                add.lines = list(c("R² marginal",
                                   round(belo_cresc_lme_int_r2[1,1],
                                         digits = 4),
-                                  round(noto_cresc_lme_int_r2[1,1],
+                                  round(noto_cresc_lme_r2[1,1],
                                         digits = 4),
-                                  round(aniso_cresc_lme_int_r2[1,1],
+                                  round(aniso_cresc_lme_r2[1,1],
                                         digits = 4),
-                                  round(zygo_cresc_lme_int_r2[1,1],
+                                  round(zygo_cresc_lme_r2[1,1],
                                         digits = 4)),
                                 c("R² conditional",
                                   round(belo_cresc_lme_int_r2[1,2], 
                                         digits = 4),
-                                  round(noto_cresc_lme_int_r2[1,2],
+                                  round(noto_cresc_lme_r2[1,2],
                                         digits = 4),
-                                  round(aniso_cresc_lme_int_r2[1,2],
+                                  round(aniso_cresc_lme_r2[1,2],
                                         digits = 4),
-                                  round(zygo_cresc_lme_int_r2[1,2],
+                                  round(zygo_cresc_lme_r2[1,2],
                                         digits = 4))))
     #Tabela de Anovas
     stargazer( belo_cresc_anova, noto_cresc_anova,
@@ -389,12 +391,12 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
     belo_cap_glmm_int <- glmer((log(taxacap_hor + 1)+1) ~ log(biomassa_mg)*tratamento +
-                            (1|bloco), data = belostomatidae, family = Gamma)
+                            (1|bloco), data = belostomatidae, family = gaussian)
     belo_cap_glmm_int
     
     summary(belo_cap_glmm_int)
     
-    Anova(belo_cap_glmm_int, type = "III") #com interação
+    Anova(belo_cap_glmm_int, type = "III") #sem interação (Gamma)
     
     plot(belo_cap_glmm_int)
     
@@ -424,35 +426,67 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       summary(belo_cap_glmm)
       
       Anova(belo_cap_glmm, type = "II")
+      
+    #lme
+      belo_cap_lme_int <- lme(log(taxacap_hor+1) ~ log(biomassa_mg)*tratamento,
+                          random = ~1|bloco, data = belostomatidae, na.action = na.omit)
+      
+      summary(belo_cap_lme_int)
+      
+      Anova(belo_cap_lme_int, type = "III")
+      
+      belo_cap_lme <- lme(log(taxacap_hor+1) ~ log(biomassa_mg) + tratamento,
+                          random = ~1|bloco, data = belostomatidae, na.action = na.omit)
+      summary(belo_cap_lme)
+      
+      Anova(belo_cap_lme)
+      
     
     #Figura
-      model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacap_hor, 
-                 "Capture rate [Captures/hour], log10 scale", belo_cap_lme_int,
-                 title = "Belostomatidae") #pensar bem, estranho...
+      belo_cap <- model_line(belostomatidae, belostomatidae$biomassa_mg,
+                             (belostomatidae$taxacap_hor+1), 
+                 "Capture rate [Captures/hour], log10 scale", belo_cap_glmm_int,
+                 title = "Belostomatidae")+annotation_logticks()  #pensar bem, estranho...
     
+      belo_cap <- belo_cap + geom_hline(yintercept = 1, linetype = 2)
+      belo_cap
       
+      jpeg(filename = "capture_belos.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      belo_cap
+      dev.off()
     
     
       
   #Notonectidae
-    noto_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
-                            random = ~1|bloco, data = notonectidae, na.action = na.omit)
-    noto_cap_lme_int   
+    noto_cap_glmm_int <- glmer((log(taxacap_hor + 1)+1) ~ log(biomassa_mg)*tratamento +
+                                (1|bloco), data = notonectidae, family = Gamma)
+    noto_cap_glmm_int   
     
-    summary(noto_cap_lme_int) #não tem interação
+    noto_cap_glmm <- glmer((log(taxacap_hor + 1)+1) ~ log(biomassa_mg) + tratamento +
+                             (1|bloco), data = notonectidae, family = Gamma)
+    noto_cap_glmm
+    summary(noto_cap_glmm)
     
-    Anova(noto_cap_lme_int, type = "III")
+    #lme para comparar
+    lme(log(taxacap_hor) ~ log(biomassa_mg) + tratamento,
+        random = ~1|bloco, data = notonectidae, na.action = na.omit)
+    
+    summary(noto_cap_glmm_int) #não tem interação
+    
+    Anova(noto_cap_glmm_int, type = "III")
     
     noto_cap_lme_int_r2 <- r.squaredGLMM(noto_cap_lme_int)
     
-    noto_cap_lme <- lme(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento,
+    noto_cap_lme <- lme(log(taxacap_hor + 1) ~ log(biomassa_mg) + tratamento,
                         random = ~1|bloco, data = notonectidae, na.action = na.omit)
     
     summary(noto_cap_lme)
     
     Anova(noto_cap_lme, type = "II") #a biomassa tem efeito
     
-    plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = notonectidae))
+    plot(lm((log(taxacap_hor + 1)+1) ~ log(biomassa_mg) + tratamento, data = notonectidae))
     
     shapiro.test(resid(noto_cap_lme))
     
@@ -472,8 +506,18 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     noto_cap_lme_min_r2 <- r.squaredGLMM(noto_cap_lme_min)
     
     #Figura
-      model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$taxacap1, 
-                 "taxa de Captura []", noto_cap_lme)
+      noto_cap <- model_line(notonectidae, notonectidae$biomassa_mg, (notonectidae$taxacap_hor + 1), 
+                 "Capture rate [Captures/hour], log10 scale", noto_cap_lme, "Notonectidae")
+      noto_cap <- noto_cap + geom_hline(yintercept = 1, linetype = 2)+annotation_logticks()
+      noto_cap
+      
+      jpeg(filename = "capture_noto.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      noto_cap
+      dev.off()
+      
+      
       
     #Tabela com os modelos Usar como modelo de tabela para os outros
       stargazer( noto_cap_lme_int, noto_cap_lme, noto_cap_lme_min, align = TRUE,
@@ -486,25 +530,44 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                                                   round(noto_cap_lme_r2[1,2], digits = 4), round(noto_cap_lme_min_r2[1,2], digits = 4))))
       
   #Anisoptera
-    aniso_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
+    aniso_cap_lme_int <- lme(log(taxacap_hor + 1) ~ log(biomassa_mg)*tratamento,
                              random = ~1|bloco, data = anisoptera, na.action = na.omit)
 
-    summary(aniso_cap_lme_int) #interação marginalmente significativa
+    summary(aniso_cap_lme_int) #sem inter
     
     Anova(aniso_cap_lme_int, type = "III")
     plot(aniso_cap_lme_int)
     
-    plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+    plot(lm(log(taxacap_hor+1) ~ log(biomassa_mg) + tratamento, data = anisoptera))
     
     shapiro.test(resid(aniso_cap_lme_int))
     
+    aniso_cap_lme <- lme(log(taxacap_hor + 1) ~ log(biomassa_mg) + tratamento,
+                         random = ~1|bloco, data = anisoptera, na.action = na.omit)
+    aniso_cap_lme
+    
+    summary(aniso_cap_lme)
+    
+    Anova(aniso_cap_lme, type = "II")
+    
+    
+    
     #Figura
-      model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$taxacap1,
-                 "Taxa de Captura []",
-                 aniso_cap_lme_int)
+      aniso_cap <- model_line(anisoptera, anisoptera$biomassa_mg, (anisoptera$taxacap_hor+1),
+                 "Capture rate [Captures/hour], log10 scale",
+                 aniso_cap_lme, "Anisoptera")+ geom_hline(yintercept = 1, linetype = 2)+
+                  annotation_logticks()
+      aniso_cap
+      
+      jpeg(filename = "capture_aniso.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      aniso_cap
+      dev.off()
+      
     
   #Zygoptera
-    zygo_cap_lme_int <- lme(log(taxacap_min_NA) ~ log(biomassa_mg)*tratamento,
+    zygo_cap_lme_int <- lme(log(taxacap_hor+1) ~ log(biomassa_mg)*tratamento,
                             random = ~1|bloco, data = zygoptera, na.action = na.omit)
 
     zygo_cap_lme_int
@@ -514,7 +577,7 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     
     shapiro.test(resid(zygo_cap_lme_int))
     
-    zygo_cap_lme <- lme(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento,
+    zygo_cap_lme <- lme(log(taxacap_hor+1) ~ log(biomassa_mg) + tratamento,
                         random = ~1|bloco, data = zygoptera, na.action = na.omit)
     
      summary(zygo_cap_lme)   
@@ -523,13 +586,22 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
      
      plot(zygo_cap_lme)
      
-     plot(lm(log(taxacap_min_NA) ~ log(biomassa_mg) + tratamento, data = zygoptera))
+     plot(lm(log(taxacap_hor+1) ~ log(biomassa_mg) + tratamento, data = zygoptera))
      
      shapiro.test(resid(zygo_cap_lme))
      
      #Figura
-      model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$taxacap1, 
-                 "Taxa de Captura []", zygo_cap_lme)
+     zygo_cap <- model_line(zygoptera, zygoptera$biomassa_mg, (zygoptera$taxacap_hor+1), 
+                 "Capture rate [Captures/hour], log10 scale", zygo_cap_lme, "Zygoptera") + geom_hline(yintercept = 1, linetype = 2)+
+                  annotation_logticks()
+     zygo_cap
+     
+     jpeg(filename = "capture_zygo.jpg", width = 2350, height = 1900, 
+          units = "px", pointsize = 12, quality = 100,
+          bg = "white",  res = 300)
+     zygo_cap
+     dev.off()
+      
       
   #Geral
       #Proporções  
@@ -562,6 +634,49 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       proporcao
       dev.off()
       
+    #Tabela dos modelos de taxa de captura
+      #os modelos de cada são:
+      belo_cap_lme
+      noto_cap_lme
+      aniso_cap_lme
+      zygo_cap_lme
+      
+      #R2 para lme
+      belo_cap_lme_r2 <- r.squaredGLMM(belo_cap_lme)
+      noto_cap_lme_r2 <- r.squaredGLMM(noto_cap_lme)
+      aniso_cap_lme_r2 <- r.squaredGLMM(aniso_cap_lme)
+      zygo_cap_lme_r2 <- r.squaredGLMM(zygo_cap_lme)
+      
+      #tabela comparativa dos modelos
+      stargazer( belo_cap_lme, noto_cap_lme,
+                 aniso_cap_lme, zygo_cap_lme,
+                 align = TRUE,
+                 title = "Capture rate Model results", ci = TRUE,
+                 ci.level = 0.90, model.numbers = FALSE,
+                 notes = "Confidence Interval of 90 percent",
+                 column.labels = c("Belostomatidae", "Notonectidae",
+                                   "Anisoptera", "Zygoptera"),
+                 covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                      "Constant"), 
+                 dep.var.labels = "Log(Capture rate + 1)",
+                 add.lines = list(c("R² marginal",
+                                    round(belo_cap_lme_r2[1,1],
+                                          digits = 4),
+                                    round(noto_cap_lme_r2[1,1],
+                                          digits = 4),
+                                    round(aniso_cap_lme_r2[1,1],
+                                          digits = 4),
+                                    round(zygo_cap_lme_r2[1,1],
+                                          digits = 4)),
+                                  c("R² conditional",
+                                    round(belo_cap_lme_r2[1,2], 
+                                          digits = 4),
+                                    round(noto_cap_lme_r2[1,2],
+                                          digits = 4),
+                                    round(aniso_cap_lme_r2[1,2],
+                                          digits = 4),
+                                    round(zygo_cap_lme_r2[1,2],
+                                          digits = 4))))
       
      
 # Modelos de Taxa de Consumo (total presas corrigido) ----------------------------------------------
