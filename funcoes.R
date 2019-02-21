@@ -26,7 +26,7 @@
       theme(axis.text = element_text(color = "black",size = rel(1.3)))+
       theme(legend.background = element_rect(fill="transparent"))+
       theme(plot.title = element_text(face = "bold", size = 20, hjust = 0.5))
-  } 
+  }
 
 #teste
 model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$taxacrescimento,
