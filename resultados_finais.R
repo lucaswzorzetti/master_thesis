@@ -43,7 +43,8 @@
                                 BiomassaTotalconsumidaprimeirodia) #transformar para
                               #biomassa com equações alometricas de Benke et al 1999
     geral <- geral %>% mutate(biomassa_mg = biomassant*1000)
-    geral <- geral %>% mutate(totalpresasperdiamg = Totalpresascorrigido/biomassa_mg)
+    geral <- geral %>% mutate(totalpresasperdiamg = Totalpresascorrigido/biomassa_mg,
+                              totalpresasperdiag = Totalpresascorrigido/biomassant)
     geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor), #colocando NAs para facilitar analise
                               taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min),
                               consumo1dia_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
@@ -63,7 +64,7 @@
     anisoptera <-  filter(geral, suborfam == "Anisoptera")
     zygoptera <-  filter(geral, suborfam == "Zygoptera")
 
-
+as
 # Equações alometricas ----------------------------------------------------
 #Extraindo equações alometricas
 alo_belo <- lm(log(biomassant) ~ log(compr), data = belostomatidae)
@@ -846,94 +847,144 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
   
 # Modelos de Taxa de Consumo (total presas corrigido) ----------------------------------------------
   #Belostomatidae
-    belo_pres_lme_int <- lme(totalpresasperdiamg ~ biomassa_mg*tratamento,
-                             random = ~1|bloco, data = belostomatidae, na.action = na.omit)
-    summary(belo_pres_lme_int) #inter não significativa
+    belo_pres_lme_int <- lme(log(totalpresasperdiag + 1) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = belostomatidae, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+    summary(belo_pres_lme_int) #inter significativa
     
     Anova(belo_pres_lme_int, type = "III")
+    
+    shapiro.test(resid(belo_pres_lme_int))
+    
+    plot(belo_pres_lme_int)
       
-    belo_pres_lme <-  lme(totalpresasperdiamg ~ biomassa_mg + tratamento,
-                          random = ~1|bloco, data = belostomatidae) 
+    belo_pres_lme <-  lme(log(totalpresasperdiag + 1) ~ log(biomassa_mg) + tratamento,
+                          random = ~1|bloco, data = belostomatidae,
+                          weights = varIdent(form = ~ 1 | tratamento), na.action = na.omit) 
     summary(belo_pres_lme)
     
     Anova(belo_pres_lme)
     
-    plot(lm(totalpresasperdiamg ~ log(biomassa_mg) + tratamento, data = belostomatidae))
+    plot(lm(log(totalpresasperdiag + 1) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
+    
+    plot(belo_pres_lme)
+    
+    belostomatidae$totalpresasperdiag[4] <- NA
+    belostomatidae$totalpresasperdiag[16] <- NA
+    belostomatidae$totalpresasperdiag[27] <- NA
     
     shapiro.test(resid(belo_pres_lme)) #bem normal
     
     #figura
-      model_line2(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$totalpresasperdiamg,
-                 "Número de Presas Consumidas / dia", belo_pres_lme)
+      belo_cons <- model_line(belostomatidae, belostomatidae$biomassa_mg,
+                              (belostomatidae$totalpresasperdiag+1),
+                 "N° preys consumed/day/g", belo_pres_lme_int, "Belostomatidae")+
+        geom_hline(yintercept = 1, linetype = 2) + annotation_logticks() + theme(legend.position = c(0.8, 0.8))
+      belo_cons
+      
+      jpeg(filename = "cons_belo.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      belo_cons
+      dev.off()
+      
       
   #Notonectidae
-      noto_pres_lme_int <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg)*tratamento,
-                               random = ~1|bloco, data = notonectidae)
+      noto_pres_lme_int <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg)*tratamento,
+                               random = ~1|bloco, data = notonectidae,
+                               weights = varIdent(form = ~ 1 | tratamento),
+                               na.action = na.omit)
       summary(noto_pres_lme_int)
       
       Anova(noto_pres_lme_int, type = "III") #inter nao signi
       
-      noto_pres_lme <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg) + tratamento,
-                           random = ~1|bloco, data = notonectidae, na.action = na.omit)
+      noto_pres_lme <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg) + tratamento,
+                           random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                           weights = varIdent(form = ~ 1 | tratamento))
       
       summary(noto_pres_lme)
       
       Anova(noto_pres_lme, type = "II")
       
-      plot(lm(log(totalpresasperdiamg) ~ log(biomassa_mg)+ tratamento, data = notonectidae))
+      plot(lm(log(totalpresasperdiag+1) ~ log(biomassa_mg)+ tratamento, data = notonectidae))
       
       shapiro.test(resid(noto_pres_lme))
       
-      notonectidae$totalpresasperdiamg[16] <- NA
-      notonectidae$totalpresasperdiamg[8] <- NA
+      notonectidae$totalpresasperdiag[16] <- NA
+      notonectidae$totalpresasperdiag[8] <- NA
       
-      sqrt(0.0001)
         #Figura
-          model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$totalpresasperdiamg,
-                    "Total de Presas consumidas/dia", noto_pres_lme)
-          adf
+          noto_cons <- model_line(notonectidae, notonectidae$biomassa_mg,
+                                  notonectidae$totalpresasperdiag,
+                    "N° preys consumed/day/g", noto_pres_lme, "Notonectidae") +
+            annotation_logticks() + theme(legend.position = c(0.8, 0.8))
+          noto_cons
+          
+          jpeg(filename = "cons_noto.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          noto_cons
+          dev.off()
+          
+          
       
   #Anisoptera
-    aniso_pres_lme_int <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg)*tratamento,
-                              random = ~1|bloco, data = anisoptera, na.action = na.omit)
+    aniso_pres_lme_int <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg)*tratamento,
+                              random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                              weights = varIdent(form = ~ 1 | tratamento))
     summary(aniso_pres_lme_int)
     
     Anova(aniso_pres_lme_int, type = "III") #sem inter
     
-    aniso_pres_lme <- lme(log(totalpresasperdiamg) ~ log(biomassa_mg) + tratamento,
-                          random = ~1|bloco, data = anisoptera, na.action = na.omit)
+    aniso_pres_lme <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg) + tratamento,
+                          random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                          weights = varIdent(form = ~ 1 | tratamento))
     
     summary(aniso_pres_lme)
     
     Anova(aniso_pres_lme)
     
-    plot(lm(log(totalpresasperdiamg) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+    plot(aniso_pres_lme)
     
-    shapiro.test(resid(aniso_pres_lme_int))
+    plot(lm(log(totalpresasperdiag+1) ~ log(biomassa_mg) + tratamento, data = anisoptera))
     
-    anisoptera$totalpresasperdiamg[28] <- NA #pesquisar melhor isso
-    anisoptera$totalpresasperdiamg[30] <- NA
+    shapiro.test(resid(aniso_pres_lme))
+    
+    anisoptera$totalpresasperdiag[28] <- NA #pesquisar melhor isso (tá dificil de normalizar)
+    anisoptera$totalpresasperdiag[30] <- NA
+    anisoptera$totalpresasperdiag[16] <- NA
+    anisoptera$totalpresasperdiag[29] <- NA
     
       #Figura
-        model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$totalpresasperdiamg,
-                   "Taxa de consumo [individuo/dia/mg predador]",
-                   aniso_pres_lme_int)
+        aniso_cons <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$totalpresasperdiag,
+                   "N° preys consumed/day/mg",
+                   aniso_pres_lme_int, "Anisoptera") + annotation_logticks()+
+                    theme(legend.position = c(0.8, 0.8))
+        aniso_cons
+        
+        jpeg(filename = "cons_aniso.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        aniso_cons
+        dev.off()
         
   #Zygoptera
-    zygo_pres_lme_int <- lme(totalpresasperdiamg ~ log(biomassa_mg)*tratamento,
-                             random = ~1|bloco, data = zygoptera, na.action = na.omit)
+    zygo_pres_lme_int <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
     summary(zygo_pres_lme_int)
     
     Anova(zygo_pres_lme_int, type = "III")
     
-    zygo_pres_lme <- lme(totalpresasperdiamg ~ log(biomassa_mg) + tratamento,
-                         random = ~1|bloco, data = zygoptera, na.action = na.omit)
+    zygo_pres_lme <- lme(log(totalpresasperdiag+1) ~ log(biomassa_mg) + tratamento,
+                         random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                         weights = varIdent(form = ~ 1 | tratamento))
     
     summary(zygo_pres_lme)
     
     Anova(zygo_pres_lme, type = "II")
     
-    plot(lm(totalpresasperdiamg ~ log(biomassa_mg) + tratamento, data = zygoptera))
+    plot(lm(log(totalpresasperdiag+1) ~ log(biomassa_mg) + tratamento, data = zygoptera))
     
     shapiro.test(resid(zygo_pres_lme))
     
