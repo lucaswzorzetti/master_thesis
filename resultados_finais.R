@@ -47,13 +47,16 @@
                               totalpresasperdiag = Totalpresascorrigido/biomassant)
     geral <- geral %>% mutate(taxacap_hor_NA = ifelse(taxacap_hor == 0, NA, taxacap_hor), #colocando NAs para facilitar analise
                               taxacap_min_NA = ifelse(taxacap_min == 0, NA, taxacap_min),
-                              consumo1dia_NA = ifelse(taxacap_min == 0, NA, taxacap_min))
-    geral <- geral %>% group_by(amostra) %>%  mutate(capturas =   #numero de capturas em 1h30min
-                                                       sum(!is.na(tempocap1),
-                                                       !is.na(tempocap2),!is.na(tempocap3)))
-    geral <- geral %>% mutate(tempocapmedio = ifelse(test = sum(tempocap1, tempocap2, tempocap3, na.rm = TRUE) > 0,
-                                                     sum(tempocap1, tempocap2, tempocap3, na.rm = TRUE)/presas_consumidas_gravacao,
-                                                     NA))
+                              consumo1dia_NA = ifelse(consumo1dia == 0, NA, consumo1dia))
+    geral <- geral %>% mutate(tempocapmedio = ifelse(test = is.na(tempocap1), yes = NA,
+                                                     no = ifelse(test = is.na(tempocap2), yes = tempocap1,
+                                                                 no = ifelse(test = is.na(tempocap3), 
+                                                                             yes = ((tempocap1+tempocap2)/2),
+                                                                             no = ((tempocap1+tempocap2+tempocap3)/3)))))
+    geral <- geral %>% mutate(consumo_rel_1dia = (consumo1dia/1000)/biomassant,
+                              consumo_rel_1diaNA = ifelse(test = consumo_rel_1dia > 0,
+                                                        yes = consumo_rel_1dia,
+                                                        no = NA)) #mg presa/gr predador
     geral$presas_consumidas_gravacao[114] <- 2
     
     View(geral)
@@ -685,14 +688,14 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       
      
 
-# Modelos de Tempo de Captura ---------------------------------------------
+# Modelos de Tempo médio de Captura ---------------------------------------------
   #Belostomatidae (muito pouco capturou, muitos NA's)
       belo_temcap_lme_int <- lme(log(tempocapmedio) ~ log(biomassa_mg)*tratamento,
                                   random = ~1|bloco, data = belostomatidae, na.action = na.omit)
       summary(belo_temcap_lme_int)
-      Anova(belo_temcap_lme_int, type = "III") 
+      Anova(belo_temcap_lme_int, type = "III") #inter marginal
       shapiro.test(resid(belo_temcap_lme_int))
-      plot(belo_temcap_lme_int)
+      plot(belo_temcap_lme_int) #poucos dados não NA's
       
       #figura
         belo_temcap <- model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$tempocapmedio, 
@@ -844,7 +847,141 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                                         round(zygo_temcap_lme_r2[1,2],
                                               digits = 4))))  
       
-  
+ 
+
+# Modelos de Tempo de Primeira Captura ------------------------------------
+  #Belostomatidae -> exatamente igual ao médio(só capturaram 1 todos)
+          
+  #Notonectidae
+    noto_temcap1_lme_int <- lme(log(tempocap1) ~ log(biomassa_mg)*tratamento,
+                                  random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                                  weights = varIdent(form = ~ 1 | tratamento))
+    summary(noto_temcap1_lme_int) #sem inter
+    Anova(noto_temcap1_lme_int, type = "III")
+    
+    noto_temcap1_lme <- lme(log(tempocap1) ~ log(biomassa_mg) + tratamento,
+                                random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                                weights = varIdent(form = ~ 1 | tratamento))
+    summary(noto_temcap1_lme)
+    Anova(noto_temcap1_lme)
+    plot(noto_temcap1_lme)
+    shapiro.test(resid(noto_temcap1_lme))
+    plot(lm(log(notonectidae$tempocap1)~log(notonectidae$biomassa_mg)+notonectidae$tratamento))
+    
+    notonectidae$tempocap1[13] <- NA
+    
+    #figura
+    noto_temcap1 <- model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$tempocap1, 
+                              "Time of first capture [s], log10 scale", noto_temcap1_lme, "Notonectidae")+
+      geom_hline(yintercept = 0, linetype = 2)+
+      annotation_logticks() + theme(legend.position = c(0.8, 0.8))
+    noto_temcap1
+    
+    jpeg(filename = "temcap1_noto.jpg", width = 2350, height = 1900, 
+         units = "px", pointsize = 12, quality = 100,
+         bg = "white",  res = 300)
+    noto_temcap1
+    dev.off()
+    
+  #Anisoptera
+    aniso_temcap1_lme_int <- lme(log(tempocap1) ~ log(biomassa_mg)*tratamento,
+                                 random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                                 weights = varIdent(form = ~ 1 | tratamento))
+    summary(aniso_temcap1_lme_int)
+    Anova(aniso_temcap1_lme_int, type = "III") #tem inter
+    
+    plot(aniso_temcap1_lme_int)
+    plot(lm(log(anisoptera$tempocap1)~log(anisoptera$biomassa_mg)+anisoptera$tratamento))
+    shapiro.test(resid(aniso_temcap1_lme_int))
+    
+    #Figura
+    aniso_temcap1 <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$tempocap1, 
+                               "Time of first capture [s], log10 scale", aniso_temcap1_lme, "Anisoptera")+
+      geom_hline(yintercept = 0, linetype = 2)+
+      annotation_logticks() + theme(legend.position = c(0.8, 0.8))
+    aniso_temcap1
+    
+    jpeg(filename = "temcap1_aniso.jpg", width = 2350, height = 1900, 
+         units = "px", pointsize = 12, quality = 100,
+         bg = "white",  res = 300)
+    aniso_temcap1
+    dev.off()
+    
+  #Zygoptera
+    zygo_temcap1_lme_int <- lme(log(tempocap1) ~ log(biomassa_mg)*tratamento,
+                                random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                                weights = varIdent(form = ~ 1 | tratamento))
+    summary(zygo_temcap1_lme_int)
+    
+    Anova(zygo_temcap1_lme_int, type = "III")
+    
+    zygo_temcap1_lme <- lme(log(tempocap1) ~ log(biomassa_mg) + tratamento,
+                                random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                                weights = varIdent(form = ~ 1 | tratamento))
+    summary(zygo_temcap1_lme)
+    Anova(zygo_temcap1_lme)
+    plot(zygo_temcap1_lme)
+    shapiro.test(resid(zygo_temcap1_lme))
+    plot(lm(log(zygoptera$tempocap1)~log(zygoptera$biomassa_mg)+zygoptera$tratamento))
+    
+    #Figura
+    zygo_temcap1 <- model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$tempocap1, 
+                                "Time of first capture [s], log10 scale", zygo_temcap1_lme, "Zygoptera")+
+      geom_hline(yintercept = 0, linetype = 2)+
+      annotation_logticks() + theme(legend.position = c(0.8, 0.8))
+    zygo_temcap1
+    
+    jpeg(filename = "temcap1_zygo.jpg", width = 2350, height = 1900, 
+         units = "px", pointsize = 12, quality = 100,
+         bg = "white",  res = 300)
+    zygo_temcap1
+    dev.off()
+    
+  #Tabela geral dos modelos de 1a captura
+    #os modelos de cada são:
+    noto_temcap1_lme
+    aniso_temcap1_lme_int
+    zygo_temcap1_lme
+    
+    #R2 para lme
+    noto_temcap1_lme_r2 <- r.squaredGLMM(noto_temcap1_lme)
+    aniso_temcap1_lme_int_r2 <- r.squaredGLMM(aniso_temcap1_lme_int)
+    zygo_temcap1_lme_r2 <- r.squaredGLMM(zygo_temcap1_lme)
+    
+    #tabela comparativa dos modelos
+    stargazer( noto_temcap1_lme,
+               aniso_temcap1_lme_int,
+               zygo_temcap1_lme,
+               align = TRUE,
+               title = "First Capture Time Models results", ci = TRUE,
+               ci.level = 0.90, model.numbers = FALSE,
+               notes = "Confidence Interval of 90 percent",
+               column.labels = c("Notonectidae",
+                                 "Anisoptera", "Zygoptera"),
+               covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                    "Log(Biomass): Treatment",
+                                    "Constant"), 
+               dep.var.labels = "Log(First Capture Time)",
+               add.lines = list(c("R² marginal",
+                                  round(noto_temcap1_lme_r2[1,1],
+                                        digits = 4),
+                                  round(aniso_temcap1_lme_int_r2[1,1],
+                                        digits = 4),
+                                  round(zygo_temcap1_lme_r2[1,1],
+                                        digits = 4)),
+                                c("R² conditional",
+                                  round(noto_temcap1_lme_r2[1,2],
+                                        digits = 4),
+                                  round(aniso_temcap1_lme_int_r2[1,2],
+                                        digits = 4),
+                                  round(zygo_temcap1_lme_r2[1,2],
+                                        digits = 4))))
+    
+
+
+
+
+
 # Modelos de Taxa de Consumo (total presas corrigido) ----------------------------------------------
   #Belostomatidae
     belo_pres_lme_int <- lme(log(totalpresasperdiag + 1) ~ log(biomassa_mg)*tratamento,
@@ -1041,7 +1178,6 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                    noto_pres_lme,
                    aniso_pres_lme,
                    zygo_pres_lme,
-                   type = "text",
                    align = TRUE,
                    title = "Consumption rate (prey/day/g) Models results", ci = TRUE,
                    ci.level = 0.90, model.numbers = FALSE,
@@ -1070,18 +1206,212 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
                                             digits = 4),
                                       round(zygo_pres_lme_r2[1,2],
                                             digits = 4))))
+
+# Modelos de Taxa de Consumo (gravação) -----------------------------------
+  #Belostomatidae
+    belo_cons_lme_int <- lme(log(consumo_rel_1dia+1) ~ log(biomassa_mg)*tratamento,
+                     random = ~1|bloco, data = belostomatidae, na.action = na.omit,
+                     weights = varIdent(form = ~ 1 | tratamento))    
+    summary(belo_cons_lme_int)
+    
+    Anova(belo_cons_lme_int, type = "III")
+    
+    belo_cons_lme <- lme(log(consumo_rel_1dia+1) ~ log(biomassa_mg) + tratamento,
+                         random = ~1|bloco, data = belostomatidae, na.action = na.omit,
+                         weights = varIdent(form = ~ 1 | tratamento))
+    summary(belo_cons_lme)
+    
+    Anova(belo_cons_lme)
+    
+    plot(belo_cons_lme)
+    
+    shapiro.test(resid(belo_cons_lme))
+    
+    plot(lm(log(consumo_rel_1dia + 1) ~ log(biomassa_mg) + tratamento, data = belostomatidae))
+    
+    belostomatidae$consumo_rel_1dia[1] <- NA #com zeros precisa, com NA não
+    belostomatidae$consumo_rel_1dia[11] <- NA
+    belostomatidae$consumo_rel_1dia[6] <- NA
+    belostomatidae$consumo_rel_1dia[8] <- NA
+    belostomatidae$consumo_rel_1dia[26] <- NA
+    
+    #Figura
+      belo_cons <- model_line(belostomatidae, belostomatidae$biomassa_mg, 
+                  (belostomatidae$consumo_rel_1dia+1),
+                 "Relative Consumption [gr prey/ gr predator, log10 scale",
+                  belo_cons_lme, "Belostomatidae")+annotation_logticks()
+      belo_cons
+      
+      jpeg(filename = "cons_belo.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      belo_cons
+      dev.off()
+      
+  #Notonectidae
+    noto_cons_lme_int <- lme(log(consumo_rel_1dia + 1) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+    summary(noto_cons_lme_int) #sem inter
+      
+    Anova(noto_cons_lme_int, type = "III")  
+    
+    noto_cons_lme <- lme(log(consumo_rel_1dia + 1) ~ log(biomassa_mg) + tratamento,
+                             random = ~1|bloco, data = notonectidae, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+    summary(noto_cons_lme)
+    
+    Anova(noto_cons_lme)
+    
+    shapiro.test(resid(noto_cons_lme))
+    
+    plot(lm(log(consumo_rel_1dia + 1) ~ log(biomassa_mg) + tratamento, data = notonectidae))
+     
+    notonectidae$consumo_rel_1dia[23] <- NA 
+    notonectidae$consumo_rel_1dia[21] <- NA 
+    
+    #figura
+      noto_cons <- model_line(notonectidae, notonectidae$biomassa_mg, 
+                              (notonectidae$consumo_rel_1dia+1),
+                              "Relative Consumption [gr prey/ gr predator, log10 scale",
+                              noto_cons_lme, "Notonectidae") + annotation_logticks()
+      noto_cons
+      
+      jpeg(filename = "cons_noto.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      noto_cons
+      dev.off()
+      
+  #Anisoptera
+     aniso_cons_lme_int <-   lme(log(consumo_rel_1dia) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+     summary(aniso_cons_lme_int)
+     Anova(aniso_cons_lme_int, type = "III") #sem inter
+     
+     anisoptera$consumo_rel_1dia[7] <- NA
+     
+     plot(aniso_cons_lme_int)
+     
+     aniso_cons_lme <-   lme(log(consumo_rel_1dia) ~ log(biomassa_mg) + tratamento,
+                                 random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                                 weights = varIdent(form = ~ 1 | tratamento))
+     summary(aniso_cons_lme)
+     Anova(aniso_cons_lme)
+     
+     shapiro.test(resid(aniso_cons_lme))
+     
+     plot(lm(log(consumo_rel_1diaNA) ~ log(biomassa_mg) + tratamento, data = anisoptera))
+     
+     #Figura
+       aniso_cons <- model_line(anisoptera, anisoptera$biomassa_mg, 
+                               (anisoptera$consumo_rel_1dia+1),
+                               "Relative Consumption [gr prey/ gr predator, log10 scale",
+                               aniso_cons_lme, "Anisoptera") + annotation_logticks()
+       aniso_cons
+       
+       jpeg(filename = "cons_aniso.jpg", width = 2350, height = 1900, 
+            units = "px", pointsize = 12, quality = 100,
+            bg = "white",  res = 300)
+       aniso_cons
+       dev.off()
+      
+  #Zygoptera
+    zygo_cons_lme_int <- lme(log(consumo_rel_1dia+1) ~ log(biomassa_mg)*tratamento,
+                             random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+    summary(zygo_cons_lme_int )  
+    Anova(zygo_cons_lme_int, type = "III") #sem inter
+    
+    zygo_cons_lme<- lme(log(consumo_rel_1dia+1) ~ log(biomassa_mg) + tratamento,
+                             random = ~1|bloco, data = zygoptera, na.action = na.omit,
+                             weights = varIdent(form = ~ 1 | tratamento))
+    summary(zygo_cons_lme)
+    Anova(zygo_cons_lme)
+    
+    plot(zygo_cons_lme)
+    
+    shapiro.test(resid(zygo_cons_lme))
+    
+    plot(lm(log(consumo_rel_1dia+1) ~ log(biomassa_mg) + tratamento, data = zygoptera))
+    
+    zygoptera$consumo_rel_1dia[1] <- NA
+    zygoptera$consumo_rel_1dia[19] <- NA   
+       
+    #Figura
+      zygo_cons <- model_line(zygoptera, zygoptera$biomassa_mg, 
+                               (zygoptera$consumo_rel_1dia+1),
+                               "Relative Consumption [gr prey/ gr predator, log10 scale",
+                               zygo_cons_lme, "zygoptera") + annotation_logticks()
+      zygo_cons
+      
+      jpeg(filename = "cons_zygo.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      zygo_cons
+      dev.off()
+      
+  #Tabela dos modelos de taxa de consumo 1 dia
+      #os modelos de cada são:
+      belo_cons_lme
+      noto_cons_lme
+      aniso_cons_lme
+      zygo_cons_lme
+      
+      #R2 para lme
+      belo_cons_lme_r2 <- r.squaredGLMM(belo_cons_lme)
+      noto_cons_lme_r2 <- r.squaredGLMM(noto_cons_lme)
+      aniso_cons_lme_r2 <- r.squaredGLMM(aniso_cons_lme)
+      zygo_cons_lme_r2 <- r.squaredGLMM(zygo_cons_lme)
+      
+      #tabela comparativa dos modelos
+      stargazer( belo_cons_lme,
+                 noto_cons_lme,
+                 aniso_cons_lme,
+                 zygo_cons_lme,
+                 align = TRUE,
+                 title = "Relative Consumption (g prey/g predator) Models results", ci = TRUE,
+                 ci.level = 0.90, model.numbers = FALSE,
+                 notes = "Confidence Interval of 90 percent",
+                 column.labels = c("Belostomatidae", "Notonectidae",
+                                   "Anisoptera", "Zygoptera"),
+                 covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                      "Constant"), 
+                 dep.var.labels = c("Log(Consumption+1)", "Log(Consumption)",
+                                    "Log(Consumption+1)"),
+                 add.lines = list(c("R² marginal",
+                                    round(belo_cons_lme_r2[1,1],
+                                          digits = 4),
+                                    round(noto_cons_lme_r2[1,1],
+                                          digits = 4),
+                                    round(aniso_cons_lme_r2[1,1],
+                                          digits = 4),
+                                    round(zygo_cons_lme_r2[1,1],
+                                          digits = 4)),
+                                  c("R² conditional",
+                                    round(belo_cons_lme_r2[1,2], 
+                                          digits = 4),
+                                    round(noto_cons_lme_r2[1,2],
+                                          digits = 4),
+                                    round(aniso_cons_lme_r2[1,2],
+                                          digits = 4),
+                                    round(zygo_cons_lme_r2[1,2],
+                                          digits = 4))))
+      
+       
 # Modelos de Tempo de Manipulação da Presa --------------------------------
   #Belostomatidae - não pode tempo de manip - não foi medido
        
   #Notonectidae
-        noto_temp_lme_int <- lme(log(tempomanipmedio+1) ~ log(biomassa_mg)*tratamento,
+        noto_temp_lme_int <- lme(log(tempomanipmedio) ~ log(biomassa_mg)*tratamento,
                                  random = ~1|bloco, data = notonectidae,
                                  na.action = na.omit, weights = varIdent(form = ~ 1 | tratamento))
         summary(noto_temp_lme_int) #sem interação
         
         Anova(noto_temp_lme_int, type = "III")
         
-        noto_temp_lme <- lme(log(tempomanipmedio+1) ~ log(biomassa_mg) + tratamento,
+        noto_temp_lme <- lme(log(tempomanipmedio) ~ log(biomassa_mg) + tratamento,
                              random = ~1|bloco, data = notonectidae,
                              na.action = na.omit,  weights = varIdent(form = ~ 1 | tratamento))
         
@@ -1097,17 +1427,28 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
         notonectidae$tempomanipmedio[14] <- NA #será que é muito outlier??
         notonectidae$tempomanipmedio[29] <- NA #tentar glmm nesses
         notonectidae$tempomanipmedio[17] <- NA
-        notonectidae$tempomanipmedio[21] <- NA
         notonectidae$tempomanipmedio[13] <- NA
+        notonectidae$tempomanipmedio[21] <- NA
         
           #Figura
-            model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$tempomanip1,
-                       "Tempo de manipulação da presa [segundos]",
-                       noto_temp_lme)
+          noto_temp <- model_line(notonectidae, notonectidae$biomassa_mg, notonectidae$tempomanip1,
+                       "Average Handling Time [seconds]",
+                       noto_temp_lme, "Notonectidae") + annotation_logticks()
+          noto_temp
+          
+          jpeg(filename = "temp_noto.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          noto_temp
+          dev.off()
+          
+          
+          
+          
   #Anisoptera
-    aniso_temp_lme_int <- lme(log(tempomanip1) ~ log(biomassa_mg)*tratamento,
+    aniso_temp_lme_int <- lme(log(tempomanipmedio) ~ log(biomassa_mg)*tratamento,
                               random = ~1|bloco, data = anisoptera,
-                              na.action = na.omit)
+                              na.action = na.omit, weights = varIdent(form = ~ 1 | tratamento))
     summary(aniso_temp_lme_int)  #sem interação
     
     Anova(aniso_temp_lme_int, type = "III")
@@ -1124,36 +1465,84 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
     shapiro.test(resid(aniso_temp_lme))    
     
       #Figura
-        model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$tempomanip1,
-                   "Tempo de manipulação da presa [segundos]",
-                   aniso_temp_lme)
+        aniso_temp <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$tempomanip1,
+                   "Average Handling Time [seconds]",
+                   aniso_temp_lme, "Anisoptera") + annotation_logticks()
+        aniso_temp
+        
+        jpeg(filename = "temp_aniso.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        aniso_temp
+        dev.off()
         
   #Zygoptera
-    zygo_temp_lme_int <- lme(log(tempomanip1) ~ log(biomassa_mg)*tratamento,
+    zygo_temp_lme_int <- lme(log(tempomanipmedio) ~ log(biomassa_mg)*tratamento,
                              random = ~1|bloco, data = zygoptera,
-                             na.action = na.omit)
-    summary(zygo_temp_lme_int) #sem interação
+                             na.action = na.omit, weights = varIdent(form = ~ 1 | tratamento))
+    summary(zygo_temp_lme_int) #com interação
     
     Anova(zygo_temp_lme_int, type = "III")
+    plot(zygo_temp_lme_int)
+    shapiro.test(resid(zygo_temp_lme_int))
     
-    zygo_temp_lme <- lme(log(tempomanip1) ~ log(biomassa_mg) +tratamento,
-                             random = ~1|bloco, data = zygoptera,
-                             na.action = na.omit)
-    summary(zygo_temp_lme)
-    
-    Anova(zygo_temp_lme, type = "II")
-    
-    plot(lm(log(tempomanip1) ~ log(biomassa_mg) +tratamento, data = zygoptera))
-    
-    shapiro.test(resid(zygo_temp_lme))
-    
+    plot(lm(log(tempomanipmedio) ~ log(biomassa_mg)*tratamento, data = zygoptera))
+     
       #Figura
-        model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$tempomanip1,
-                   "Tempo de manipulação da presa [segundos]",
-                   zygo_temp_lme)
+       zygo_temp <-  model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$tempomanip1,
+                   "Average Handling Time [seconds]",
+                   zygo_temp_lme, "Zygoptera") + annotation_logticks()
+       zygo_temp
+       
+       jpeg(filename = "temp_zygo.jpg", width = 2350, height = 1900, 
+            units = "px", pointsize = 12, quality = 100,
+            bg = "white",  res = 300)
+       zygo_temp
+       dev.off()
+       
+  #Tabelas gerais de modelos
+       #os modelos de cada são:
+       noto_temp_lme
+       aniso_temp_lme
+       zygo_temp_lme_int
+       
+       #R2 para lme
+       noto_temp_lme_r2 <- r.squaredGLMM(noto_temp_lme)
+       aniso_temp_lme_r2 <- r.squaredGLMM(aniso_temp_lme)
+       zygo_temp_lme_int_r2 <- r.squaredGLMM(zygo_temp_lme_int)
+       
+       #tabela comparativa dos modelos
+       stargazer( noto_temp_lme,
+                  aniso_temp_lme,
+                  zygo_temp_lme_int,
+                  align = TRUE,
+                  title = "Average Handling Time Models results", ci = TRUE,
+                  ci.level = 0.90, model.numbers = FALSE,
+                  notes = "Confidence Interval of 90 percent",
+                  column.labels = c("Notonectidae",
+                                    "Anisoptera", "Zygoptera"),
+                  covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                       "Treatment : Log(Biomass)",
+                                       "Constant"), 
+                  dep.var.labels = c("Log(Average Handling Time)"),
+                  add.lines = list(c("R² marginal",
+                                     round(noto_temp_lme_r2[1,1],
+                                           digits = 4),
+                                     round(aniso_temp_lme_r2[1,1],
+                                           digits = 4),
+                                     round(zygo_temp_lme_int_r2[1,1],
+                                           digits = 4)),
+                                   c("R² conditional",
+                                     round(noto_temp_lme_r2[1,2],
+                                           digits = 4),
+                                     round(aniso_temp_lme_r2[1,2],
+                                           digits = 4),
+                                     round(zygo_temp_lme_int_r2[1,2],
+                                           digits = 4))))
+       
     
 # Modelos de sobrevivência ------------------------------------------------
-ggdensity(data = geral, x = geral$sobrev, fill = geral$tratamento)
+gghistogram(data = geral, x = geral$sobrev, fill = geral$tratamento)
 
 
 # Modelos de Taxa de Consumo inicial com base em biomassa --------------------------------------
