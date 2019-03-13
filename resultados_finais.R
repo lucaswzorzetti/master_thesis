@@ -57,6 +57,14 @@
                               consumo_rel_1diaNA = ifelse(test = consumo_rel_1dia > 0,
                                                         yes = consumo_rel_1dia,
                                                         no = NA)) #mg presa/gr predador
+    geral <- geral %>% mutate(dif_temp_cap = ifelse(test = is.na(tempocap2),
+                                                    yes = NA,
+                                                    no = (tempocap2-tempocap1)),
+                              dif_temp_cap_mod = ifelse(test = is.na(tempocap2),
+                                                        yes = NA,
+                                                        no = ifelse(test = (tempocap2-tempocap1) < 0,
+                                                                    yes = (tempocap2-tempocap1)*-1,
+                                                                    no = (tempocap2-tempocap1))))
     geral$presas_consumidas_gravacao[114] <- 2
     
     View(geral)
@@ -688,7 +696,7 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       
      
 
-# Modelos de Tempo médio de Captura ---------------------------------------------
+# Modelos de Tempo entre as Capturas ---------------------------------------------
   #Belostomatidae (muito pouco capturou, muitos NA's)
       belo_temcap_lme_int <- lme(log(tempocapmedio) ~ log(biomassa_mg)*tratamento,
                                   random = ~1|bloco, data = belostomatidae, na.action = na.omit)
@@ -744,21 +752,30 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
         dev.off()
       
   #Anisoptera
-      aniso_temcap_lme_int <- lme(log(tempocapmedio) ~ log(biomassa_mg)*tratamento,
+      aniso_temcap_lme_int <- lme(dif_temp_cap ~ biomassa_mg*tratamento,
                                   random = ~1|bloco, data = anisoptera, na.action = na.omit,
                                   weights = varIdent(form = ~ 1 | tratamento))
       summary(aniso_temcap_lme_int)
-      Anova(aniso_temcap_lme_int, type = "III") #inter fraca (p < 0.1)
-      shapiro.test(resid(aniso_temcap_lme_int))
-      plot(aniso_temcap_lme_int)
+      Anova(aniso_temcap_lme_int, type = "III") #sem inter
       
-      plot(lm(log(tempocapmedio)~log(biomassa_mg)+tratamento, data = anisoptera))
+      aniso_temcap_lme <- lme(dif_temp_cap ~ biomassa_mg + tratamento,
+                                  random = ~1|bloco, data = anisoptera, na.action = na.omit,
+                                  weights = varIdent(form = ~ 1 | tratamento))
+      summary(aniso_temcap_lme)
+      Anova(aniso_temcap_lme)
+      
+      shapiro.test(resid(aniso_temcap_lme))
+      plot(aniso_temcap_lme)
+      
+      plot(lm(log(dif_temp_cap)~log(biomassa_mg)+tratamento, data = anisoptera))
+      
+      anisoptera$dif_temp_cap[16] <- NA
+      
         #figura
-          aniso_temcap <- model_line(anisoptera, anisoptera$biomassa_mg, anisoptera$tempocapmedio, 
-                                    "Average time of capture [s], log10 scale", aniso_temcap_lme, 
+          aniso_temcap <- model_line_semlog(anisoptera, anisoptera$biomassa_mg, anisoptera$dif_temp_cap, 
+                                    "Difference of capture times (2 and 1) [s], log10 scale", aniso_temcap_lme, 
                                     "Anisoptera")+
-            geom_hline(yintercept = 0, linetype = 2)+
-            annotation_logticks() 
+            geom_hline(yintercept = 0, linetype = 2)
           aniso_temcap
           
           jpeg(filename = "temcap_aniso.jpg", width = 2350, height = 1900, 
@@ -769,13 +786,13 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       
       
   #Zygoptera
-      zygo_temcap_lme_int <- lme(log(tempocapmedio) ~ log(biomassa_mg)*tratamento,
+      zygo_temcap_lme_int <- lme(dif_temp_cap ~ biomassa_mg*tratamento,
                                  random = ~1|bloco, data = zygoptera, na.action = na.omit,
                                  weights = varIdent(form = ~ 1 | tratamento))
       summary(zygo_temcap_lme_int)
       Anova(zygo_temcap_lme_int, type = "III") #sem inter
       
-      zygo_temcap_lme<- lme(log(tempocapmedio) ~ log(biomassa_mg) + tratamento,
+      zygo_temcap_lme<- lme(dif_temp_cap ~ biomassa_mg + tratamento,
                                  random = ~1|bloco, data = zygoptera, na.action = na.omit,
                                  weights = varIdent(form = ~ 1 | tratamento))
       summary(zygo_temcap_lme)
@@ -787,11 +804,10 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
       plot(lm(log(tempocapmedio)~log(biomassa_mg)+tratamento, data = zygoptera))
       
         #figura
-          zygo_temcap <- model_line(zygoptera, zygoptera$biomassa_mg, zygoptera$tempocapmedio, 
-                                     "Average time of capture [s], log10 scale", zygo_temcap_lme, 
+          zygo_temcap <- model_line_semlog(zygoptera, zygoptera$biomassa_mg, zygoptera$dif_temp_cap, 
+                                     "Difference of capture times (2 and 1) [s], log10 scale", zygo_temcap_lme, 
                                      "Zygoptera")+
-            geom_hline(yintercept = 0, linetype = 2)+
-            annotation_logticks() 
+            geom_hline(yintercept = 0, linetype = 2)
           zygo_temcap
           
           jpeg(filename = "temcap_zygo.jpg", width = 2350, height = 1900, 
@@ -802,47 +818,31 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
           
   #Tabela dos modelos de Tempo medio de captura
           #os modelos de cada são:
-          belo_temcap_lme_int
-          noto_temcap_lme
-          aniso_temcap_lme_int
+          aniso_temcap_lme
           zygo_temcap_lme
           
           #R2 para lme
-          belo_temcap_lme_int_r2 <- r.squaredGLMM(belo_temcap_lme_int)
-          noto_temcap_lme_r2 <- r.squaredGLMM(noto_temcap_lme)
-          aniso_temcap_lme_int_r2 <- r.squaredGLMM(aniso_temcap_lme_int)
+          aniso_temcap_lme_r2 <- r.squaredGLMM(aniso_temcap_lme)
           zygo_temcap_lme_r2 <- r.squaredGLMM(zygo_temcap_lme)
           
           #tabela comparativa dos modelos
-          stargazer( belo_temcap_lme_int,
-                     noto_temcap_lme,
-                     aniso_temcap_lme_int,
+          stargazer( aniso_temcap_lme,
                      zygo_temcap_lme,
                      align = TRUE,
-                     title = "Average Capture Time Models results", ci = TRUE,
+                     title = "Difference of Capture Time Models results", ci = TRUE,
                      ci.level = 0.90, model.numbers = FALSE,
                      notes = "Confidence Interval of 90 percent",
-                     column.labels = c("Belostomatidae", "Notonectidae",
-                                       "Anisoptera", "Zygoptera"),
-                     covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
-                                          "Log(Biomass): Treatment",
+                     column.labels = c("Anisoptera", "Zygoptera"),
+                     covariate.labels = c("Biomass", "Treatment: Warmed",
                                           "Constant"), 
-                     dep.var.labels = "Log(Average Capture Time)",
+                     dep.var.labels = "Diference of Capture Times",
                      add.lines = list(c("R² marginal",
-                                        round(belo_temcap_lme_int_r2[1,1],
-                                              digits = 4),
-                                        round(noto_temcap_lme_r2[1,1],
-                                              digits = 4),
-                                        round(aniso_temcap_lme_int_r2[1,1],
+                                        round(aniso_temcap_lme_r2[1,1],
                                               digits = 4),
                                         round(zygo_temcap_lme_r2[1,1],
                                               digits = 4)),
                                       c("R² conditional",
-                                        round(belo_temcap_lme_int_r2[1,2], 
-                                              digits = 4),
-                                        round(noto_temcap_lme_r2[1,2],
-                                              digits = 4),
-                                        round(aniso_temcap_lme_int_r2[1,2],
+                                        round(aniso_temcap_lme_r2[1,2],
                                               digits = 4),
                                         round(zygo_temcap_lme_r2[1,2],
                                               digits = 4))))  
