@@ -94,6 +94,44 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
   scale_x_continuous(limits = c(-1.1, 1), breaks = seq(-2, 2, by = 0.5))+
   scale_y_continuous(limits = c(1, 6), breaks = seq(0, 6, by = 0.5))
 
+
+# Gráfico com as Biomassa de todos ----------------------------------------
+biomassas_todos <- geral %>% ggplot(aes(x = suborfam, y = biomassa_mg, fill = suborfam))+
+                    geom_point(size = 5, alpha = 0.5, shape = 21)+
+                    scale_x_discrete(limits = c("Belostomatidae", "Anisoptera",
+                                                "Notonectidae", "Zygoptera")) +
+                    xlab("Taxa") + ylab("Biomass [mg]")+
+                    theme_classic() + theme(legend.position = "none",
+                                            axis.text = element_text(face = "bold",
+                                                                     size = 12, colour = "black"),
+                                            axis.title.x = element_blank(),
+                                            axis.title.y = element_text(face = "bold",
+                                                                        size = 18,
+                                                                        margin = margin(r = 10))
+                                            )
+biomassas_todos
+
+#tamanho
+tamanho_todos <- geral %>% ggplot(aes(x = suborfam, y = compr, fill = suborfam))+
+                  geom_point(size = geral$larg*20, alpha = 0.5, shape = 21)+
+                  scale_x_discrete(limits = c("Belostomatidae", "Anisoptera",
+                                              "Zygoptera", "Notonectidae")) +
+                  xlab("Taxa") + ylab("Width [cm]")+
+                  theme_classic() + theme(legend.position = "none",
+                                          axis.text = element_text(face = "bold",
+                                                                   size = 12, colour = "black"),
+                                          axis.title.x = element_blank(),
+                                          axis.title.y = element_text(face = "bold",
+                                                                      size = 18,
+                                                                      margin = margin(r = 10))
+  )
+tamanho_todos
+
+#tamanho
+  
+
+af
+
 # Modelos de taxa de crescimento ------------------------------------------
   #Distribuição de frequencia
     ggarrange(ggdensity(belostomatidae, x = "taxacrescimento", fill = "tratamento")
@@ -408,7 +446,7 @@ geral %>% ggplot(aes(x = log(compr), y = log(biomassa_mg), fill = suborfam, shap
 # Modelos de Taxa de Captura ----------------------------------------------
   #Belostomatidae
     belo_cap_glmm_int <- glmer(cbind(presas_consumidas_gravacao, 3-presas_consumidas_gravacao) ~ 
-                                 biomassa_mg*tratamento +
+                                 biomassa_mg + tratamento + I(biomassa_mg) +
                             (1|bloco), data = belostomatidae, family = binomial)
     belo_cap_glmm_int
     
