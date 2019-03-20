@@ -9,10 +9,8 @@
       geom_point(aes(fill=factor(tratamento)),
                  size=5) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
-      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x, n = 10),
-                    labels = trans_format("log10", math_format(10^.x)))+
-      scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x, n = 10),
-                    labels = trans_format("log10", math_format(10^.x)))+
+      scale_x_continuous(trans = "log", breaks = seq(from = min(xaxis), to = max(xaxis),
+                                                     length.out = 10))+ scale_y_continuous(trans = "log")+
       ylab(ynome)+
       xlab("Body Size [mg], log10 scale")+
       ggtitle(title)+

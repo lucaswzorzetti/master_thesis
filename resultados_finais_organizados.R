@@ -19,7 +19,7 @@
       "numeric","numeric","numeric","factor", "numeric","numeric","numeric","numeric",
       "numeric", "logical", "integer", "integer", "numeric","numeric","numeric","numeric",
       "numeric","numeric", "numeric","numeric","numeric"
-    ))
+    )) blabla
     str(geral)
     View(geral)
     
@@ -55,12 +55,13 @@
       belo_temcap1_table
       
       shapiro.test(resid(belo_temcap1_lme_int)) 
+        #Figura
+          model_line(belostomatidae, belostomatidae$biomassa_mg, belostomatidae$tempocap1, 
+                     "Time of first capture [s], log10 scale", belo_temcap1_lme, "Belostomatidae") +
+              geom_hline(yintercept = 0, linetype = 2) 
       
-      kable(belo_temcap1_table, digits = 3) #não sei...
-      stargazer(belo_temcap1_table, type = "text")
-    
       
-      #Notonectidae
+          #Notonectidae
       noto_temcap1_lme_int <- lme(log(tempocap1) ~ log(biomassa_mg)*tratamento,
                                   random = ~1|bloco, data = notonectidae, na.action = na.omit,
                                   weights = varIdent(form = ~ 1 | tratamento))
