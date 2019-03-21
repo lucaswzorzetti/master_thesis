@@ -117,55 +117,24 @@
                bg = "white",  res = 300)
           belo_temcap1
           dev.off()
-      
-      
-      #Notonectidae
-      noto_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                   data = notonectidae, na.action = na.omit)
-      summary(noto_temcap1_lme_int) 
-      Anova(noto_temcap1_lme_int, type = "III") #no interaction
-      
-      noto_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg) + tratamento + (1|bloco),
-                               data = notonectidae, na.action = na.omit)
-      summary(noto_temcap1_lme)
-      Anova(noto_temcap1_lme)
-      plot(noto_temcap1_lme)
-      shapiro.test(resid(noto_temcap1_lme))
-      
-      plot(sort(cooks.distance(noto_temcap1_lme)))
-      
-      notonectidae$tempocap1[13] <- NA #outlier removing
-      
-          #figure
-            noto_temcap1 <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
-                                       log10(notonectidae$tempocap1), 
-                                       "Time of first capture [s] \n log10 scale", noto_temcap1_lme, "Notonectidae")+
-              scale_x_continuous(breaks = c(0.84, 1, 1.18,1.30), labels = c(7 ,10, 15, 20),
-                                 limits = c(0.8, 1.3)) +
-              scale_y_continuous(breaks = c(1, 2, 3, 4), labels = c(10, 100, 1000, 10000),
-                                 limits = c(0.8, 4.5))+
-              annotation_logticks()
-            noto_temcap1
-            
-            jpeg(filename = "temcap1_noto.jpg", width = 2350, height = 1900, 
-                 units = "px", pointsize = 12, quality = 100,
-                 bg = "white",  res = 300)
-            noto_temcap1
-            dev.off()
-        
+          
       #Anisoptera
       aniso_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                    data = anisoptera, na.action = na.omit)
+                                        data = anisoptera, na.action = na.omit)
       summary(aniso_temcap1_lme_int)
-      Anova(aniso_temcap1_lme_int, type = "III") #interaction confirmed
-      
+          
+      aniso_temcap1_lme_int_table <- Anova(aniso_temcap1_lme_int, type = "III") #interaction confirmed
+      aniso_temcap1_lme_int_table
+          
       plot(aniso_temcap1_lme_int)
-      sort(cooks.distance(aniso_temcap1_lme_int))
+      View(sort(cooks.distance(aniso_temcap1_lme_int)))
       plot(sort(cooks.distance(aniso_temcap1_lme_int)))
-      
+          
       shapiro.test(resid(aniso_temcap1_lme_int))
-      
-      #Figure
+          
+      anisoptera$tempocap1[1] <- NA #cook D near 0.6, should I withdraw? it increases shapiro value
+          
+          #Figure
           aniso_temcap1 <- model_line(anisoptera, log10(anisoptera$biomassa_mg), log10(anisoptera$tempocap1), 
                                       "Time of first capture [s] \n log10 scale",
                                       aniso_temcap1_lme, "Anisoptera")+
@@ -174,26 +143,30 @@
             scale_y_continuous(breaks = c(1, 1.48, 1.7, 2, 2.48, 2.7, 3), labels = c(10, 30, 50, 100, 300, 500, 1000),
                                limits = c(0.8, 3))+
             annotation_logticks()
-            
+          
           aniso_temcap1
           
           jpeg(filename = "temcap1_aniso.jpg", width = 2350, height = 1900, 
                units = "px", pointsize = 12, quality = 100,
                bg = "white",  res = 300)
           aniso_temcap1
-          dev.off()
+          dev.off()      
+      
       
       #Zygoptera
       zygo_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
                                    data = zygoptera, na.action = na.omit)
       summary(zygo_temcap1_lme_int)
       
-      Anova(zygo_temcap1_lme_int, type = "III")
+      Anova(zygo_temcap1_lme_int, type = "III") #no interaction
       
       zygo_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg) + tratamento + (1|bloco),
                                data = zygoptera, na.action = na.omit)
       summary(zygo_temcap1_lme)
-      Anova(zygo_temcap1_lme)
+      
+      zygo_temcap1_lme_table <- Anova(zygo_temcap1_lme)
+      zygo_temcap1_lme_table
+      
       plot(zygo_temcap1_lme)
       shapiro.test(resid(zygo_temcap1_lme))
       
@@ -216,6 +189,65 @@
                bg = "white",  res = 300)
           zygo_temcap1
           dev.off()
+      
+      #Notonectidae
+      noto_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                       data = notonectidae, na.action = na.omit)
+      summary(noto_temcap1_lme_int) 
+      Anova(noto_temcap1_lme_int, type = "III") #no interaction
+          
+      noto_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                   data = notonectidae, na.action = na.omit)
+      summary(noto_temcap1_lme)
+          
+      noto_temcap1_lme_table <- Anova(noto_temcap1_lme)
+      noto_temcap1_lme_table
+      plot(noto_temcap1_lme)
+          
+      shapiro.test(resid(noto_temcap1_lme))
+          
+      plot(sort(cooks.distance(noto_temcap1_lme)))
+          
+      notonectidae$tempocap1[13] <- NA #outlier removing
+          
+          #figure
+          noto_temcap1 <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+                                     log10(notonectidae$tempocap1), 
+                                     "Time of first capture [s] \n log10 scale", noto_temcap1_lme, "Notonectidae")+
+            scale_x_continuous(breaks = c(0.84, 1, 1.18,1.30), labels = c(7 ,10, 15, 20),
+                               limits = c(0.8, 1.3)) +
+            scale_y_continuous(breaks = c(1, 2, 3, 4), labels = c(10, 100, 1000, 10000),
+                               limits = c(0.8, 4.5))+
+            annotation_logticks()
+          noto_temcap1
+          
+          jpeg(filename = "temcap1_noto.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          noto_temcap1
+          dev.off()
+          
+          
+          
+    
+          
+      #Tabela com os resultados da Anova
+          belo_temcap1_table
+          aniso_temcap1_lme_int_table
+          zygo_temcap1_lme_table
+          noto_temcap1_lme_table
+          
+          stargazer(belo_temcap1_table,
+                    aniso_temcap1_lme_int_table,
+                    zygo_temcap1_lme_table,
+                    noto_temcap1_lme_table,
+                    type = "text", summary = FALSE,
+                    title = c("Belostomatidae", "Anisoptera", "Zygoptera", "Notonectidae"))
+          
+          
+          
+          
+          pare
 
       
       
