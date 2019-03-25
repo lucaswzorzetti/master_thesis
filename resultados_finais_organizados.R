@@ -389,6 +389,8 @@
                 
                 Anova(aniso_temp_lme, type = "II")
                 
+                r.squaredGLMM(aniso_temp_lme)
+                
                 shapiro.test(resid(aniso_temp_lme))
                 
                 plot(sort(cooks.distance(aniso_temp_lme)))
@@ -424,6 +426,8 @@
                             data = zygoptera, na.action = na.omit)
       
                     Anova(zygo_temp_lme)
+                    
+                    r.squaredGLMM(zygo_temp_lme)
                     
                     plot(zygo_temp_lme)
                     shapiro.test(resid(zygo_temp_lme))
@@ -461,6 +465,8 @@
                         summary(noto_temp_lme)
                         
                         Anova(noto_temp_lme)
+                        
+                        r.squaredGLMM(noto_temp_lme)
                         
                         plot(noto_temp_lme)
                         
