@@ -13,6 +13,7 @@
     library(MASS) #transformations and statistical functions
     library(knitr) #tables
     library(predictmeans) #functions for diagnostics of models
+    library(MuMIn) #R²m and R²c
 
   #Importing 
     geral <- read.table("planilhageral_atualizada2.txt", header = T, colClasses = c(
@@ -36,6 +37,9 @@
                                                         no = ifelse(test = (tempocap2-tempocap1) < 0,
                                                                     yes = (tempocap2-tempocap1)*-1,
                                                                     no = (tempocap2-tempocap1))))
+    geral <- geral %>% mutate(dif_temp_manip = ifelse(test = is.na(tempomanip2), #Difference on two capture times
+                                                      yes = NA,
+                                                      no = (tempomanip2-tempomanip1)))
     geral <- geral %>% mutate(prop_cap = presas_consumidas_gravacao/3) #Proportion of captured prey
     
     ## Separating the Taxa ##
@@ -91,13 +95,17 @@
          tamanho_todos
           dev.off()
 
+          
 # Models of First Capture Time --------------------------------------------
       #Belostomatidae 
       belo_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
                                    data = belostomatidae, na.action = na.omit)
       summary(belo_temcap1_lme_int) #com interação
-      belo_temcap1_table <- Anova(belo_temcap1_lme_int, type = "III")
+      belo_temcap1_table <- Anova(belo_temcap1_lme_int, type = "III", digits = 8,
+                                  style = "long")
       belo_temcap1_table
+      
+      r.squaredGLMM(belo_temcap1_lme_int)
       
       shapiro.test(resid(belo_temcap1_lme_int)) 
       
@@ -125,6 +133,9 @@
           
       aniso_temcap1_lme_int_table <- Anova(aniso_temcap1_lme_int, type = "III") #interaction confirmed
       aniso_temcap1_lme_int_table
+      
+      r.squared.GLMM(aniso_temcap1_lme_int)
+      
           
       plot(aniso_temcap1_lme_int)
       View(sort(cooks.distance(aniso_temcap1_lme_int)))
@@ -249,43 +260,251 @@
           
           pare
 
-      
-      
-      
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-# Models of Difference between Capture Times ------------------------------
-
 
           
+# Models of Difference between Capture Times ------------------------------
+  #Belostomatidae: All individuals captured only one prey
+          
+  #Notonectidae: Only 2 individuals captured more than one prey
+          
+  #Anisoptera
+          aniso_diftemcap_lme_int <- lmer(log10neg(dif_temp_cap) ~ log10(biomassa_mg)*tratamento + (1|bloco),
+                                       data = anisoptera, na.action = na.omit)
+          summary(aniso_diftemcap_lme_int)
+          Anova(aniso_temcap_lme_int, type = "III") #sem inter
+          
+          aniso_diftemcap_lme <- lmer(log10neg(dif_temp_cap) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                   data = anisoptera, na.action = na.omit)
+          summary(aniso_diftemcap_lme)
+          Anova(aniso_diftemcap_lme)
+          
+          r.squaredGLMM(aniso_diftemcap_lme)
+          
+          #Diagnostics
+          shapiro.test(resid(aniso_diftemcap_lme))
+          plot(aniso_diftemcap_lme)
+           
+          plot(sort(cooks.distance(aniso_diftemcap_lme)))  # não há outliers
+          
+          anisoptera$dif_temp_cap[22] <- NA # >1
+          anisoptera$dif_temp_cap[16] <- NA # >2
+          
+          
+            #Figure
+              aniso_diftemcap <- model_line(anisoptera, log10(anisoptera$biomassa_mg),
+                                         log10neg(anisoptera$dif_temp_cap), 
+                                         "Difference of Capture Times [s]\n log10 scale",
+                                         noto_temcap1_lme, "Anisoptera")+
+                scale_x_continuous(breaks = c(1, 1.48, 1.7, 2),
+                                   labels = c(10, 30, 50, 100), limits = c(0.9, 2.17)) +
+                scale_y_continuous(breaks = c(-3.3, -2, -1, 0, 1, 2, 3, 4),
+                                   labels = c(-2000, -100, -10, 0, 10, 100, 1000, 10000))+
+                geom_hline(yintercept = 0, linetype =3)+
+                annotation_logticks()
+              aniso_diftemcap
+              
+              #saving
+              jpeg(filename = "diftemcap_aniso.jpg", width = 2350, height = 1900, 
+                   units = "px", pointsize = 12, quality = 100,
+                   bg = "white",  res = 300)
+              aniso_diftemcap
+              dev.off()
+          
+  #Zygoptera
+              zygo_diftemcap_lme_int <- lmer(log10neg(dif_temp_cap) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                          data = zygoptera, na.action = na.omit)
+              summary(zygo_diftemcap_lme_int)
+              Anova(zygo_diftemcap_lme_int, type = "III") #no inter
+              
+              zygo_diftemcap_lme<- lmer(log10neg(dif_temp_cap) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                    data = zygoptera, na.action = na.omit)
+              summary(zygo_diftemcap_lme)
+              
+              Anova(zygo_diftemcap_lme)
+              
+              r.squaredGLMM(zygo_diftemcap_lme)
+              
+              shapiro.test(resid(zygo_diftemcap_lme)) #normal
+              plot(zygo_diftemcap_lme)
+              
+              plot(sort(cooks.distance(zygo_diftemcap_lme))) #one outlier (>1)
+              
+              
+              #zygoptera$dif_temp_cap[2] <- NA #para caso de precisar
+              
+              
+              #Figure
+                zygo_diftemcap <- model_line(zygoptera, log10(zygoptera$biomassa_mg),
+                                             log10neg(zygoptera$dif_temp_cap), 
+                                              "Difference of Capture Times [s]\n log10 scale",
+                                             noto_temcap1_lme, "Zygoptera")+
+                  scale_x_continuous(breaks = c(1, 1.3, 1.48),
+                                     labels = c(10, 20, 30)) +
+                  scale_y_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3, 4),
+                                     labels = c(-1000, -100, -10, 0, 10, 100, 1000, 10000))+
+                  geom_hline(yintercept = 0, linetype = 3)+
+                  annotation_logticks()
+                zygo_diftemcap 
+                
+                #saving
+                jpeg(filename = "diftemcap_zygo.jpg", width = 2350, height = 1900, 
+                     units = "px", pointsize = 12, quality = 100,
+                     bg = "white",  res = 300)
+                zygo_diftemcap
+                dev.off()
+
+#              
+              
+          
+          
+          
+          
+          
+          
+          
+
+          
+
+# Models of Proportion of Captured Prey -----------------------------------
+
+
+                
+
+
+# Models of Handling Time -------------------------------------------------
+  #Belostomatidae: no measures
+                
+  #Anisoptera
+    aniso_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                      data = anisoptera, na.action = na.omit)
+                summary(aniso_temp_lme_int)  #sem interação
+                
+                Anova(aniso_temp_lme_int, type = "III")
+                
+                aniso_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                      data = anisoptera, na.action = na.omit)
+                summary(aniso_temp_lme)
+                
+                Anova(aniso_temp_lme, type = "II")
+                
+                shapiro.test(resid(aniso_temp_lme))
+                
+                plot(sort(cooks.distance(aniso_temp_lme)))
+                
+                #Figure
+                    aniso_temp <- model_line(anisoptera, log10(anisoptera$biomassa_mg),
+                                                  log10(anisoptera$tempomanip1), 
+                                                  "Handling Time [s]\n log10 scale",
+                                                  noto_temcap1_lme, "Anisoptera")+
+                      scale_x_continuous(breaks = c(1, 1.3, 1.48, 1.6, 1.7, 2),
+                                         labels = c(10, 20, 30, 40, 50, 100), limits = c(0.9, 2.17)) +
+                      scale_y_continuous(breaks = c(0.7, 1, 1.7, 2),
+                                         labels = c(5, 10, 50, 100))+
+                      geom_hline(yintercept = 0, linetype =3)+
+                      annotation_logticks()
+                    aniso_temp
+                    
+                    #saving
+                    jpeg(filename = "temp_aniso.jpg", width = 2350, height = 1900, 
+                         units = "px", pointsize = 12, quality = 100,
+                         bg = "white",  res = 300)
+                    aniso_temp
+                    dev.off()
+                    
+  #Zygoptera
+     zygo_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                              data = zygoptera, na.action = na.omit)
+                    summary(zygo_temp_lme_int) 
+                    
+                    Anova(zygo_temp_lme_int, type = "III") #no inter
+                    
+      zygo_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                            data = zygoptera, na.action = na.omit)
+      
+                    Anova(zygo_temp_lme)
+                    
+                    plot(zygo_temp_lme)
+                    shapiro.test(resid(zygo_temp_lme))
+                    
+                    plot(sort(cooks.distance(zygo_temp_lme)))
+                    
+                    #Figure
+                        zygo_temp <- model_line(zygoptera, log10(zygoptera$biomassa_mg),
+                                                 log10(zygoptera$tempomanip1), 
+                                                 "Handling Time [s]\n log10 scale",
+                                                 noto_temcap1_lme, "Zygoptera")+
+                          scale_x_continuous(breaks = c(0.7, 1, 1.3, 1.48),
+                                             labels = c(5, 10, 20, 30)) +
+                          scale_y_continuous(breaks = c(0.7, 1, 1.3, 1.7, 2),
+                                             labels = c(5, 10, 20, 50, 100))+
+                          annotation_logticks()
+                        zygo_temp
+                        
+                        #saving
+                        jpeg(filename = "temp_zygo.jpg", width = 2350, height = 1900, 
+                             units = "px", pointsize = 12, quality = 100,
+                             bg = "white",  res = 300)
+                        zygo_temp
+                        dev.off()
+  #Notonectidae
+    noto_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                             data = notonectidae, na.action = na.omit)
+                        summary(noto_temp_lme_int)
+                        
+                        Anova(noto_temp_lme_int, type = "III")#no inter
+                        
+    noto_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                         data = notonectidae,na.action = na.omit)
+                        
+                        summary(noto_temp_lme)
+                        
+                        Anova(noto_temp_lme)
+                        
+                        plot(noto_temp_lme)
+                        
+                        shapiro.test(resid(noto_temp_lme))
+                        
+                        plot(sort(cooks.distance(noto_temp_lme))) #one point ~0.89
+                        
+                        #notonectidae$tempomanip1[14] <- NA #não sei se precisa...
+                        
+                        #Figure
+                          noto_temp <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+                                                  log10(notonectidae$tempomanip1), 
+                                                  "Handling Time [s]\n log10 scale",
+                                                  noto_temcap1_lme, "Notonectidae")+
+                            scale_x_continuous(breaks = c(0.7, 1, 1.18, 1.4),
+                                               labels = c(5, 10, 15,  25), limits = c(0.7, 1.4)) +
+                            scale_y_continuous(breaks = c(2.48, 2.7, 3, 3.3, 3.7, 4),
+                                               labels = c(300, 500, 1000, 2000, 5000, 10000))+
+                            annotation_logticks()
+                          noto_temp
+                          
+                          #saving
+                          jpeg(filename = "temp_noto.jpg", width = 2350, height = 1900, 
+                               units = "px", pointsize = 12, quality = 100,
+                               bg = "white",  res = 300)
+                           noto_temp
+                          dev.off() 
+                        
+                        
+                
+
+# Models of Consumption of First Day --------------------------------------
+
+
+                
+                
+
+# Models of Total Consumption ----------------------------------------------
+
+
+                
+                
+
+# Models of Growth rate ---------------------------------------------------
+
+
+                

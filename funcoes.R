@@ -106,6 +106,13 @@ modulodif <- function(x, y){
   else {-z}
 }
 
+#Função para produzir uma escala log para uso com números negativos
+log10neg <- function(x){
+  ifelse(test = is.na(x), yes = NA,
+         no = ifelse(test = x == 0, yes = 0,
+                     no = ifelse(test = x>0, yes = log10(x), no = (-log10(-x)))))
+}
+
 
 
 
