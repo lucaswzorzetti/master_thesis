@@ -7,7 +7,7 @@
                                                 shape = tratamento))+
       geom_smooth(method = "lm") + 
       geom_point(aes(fill=factor(tratamento)),
-                 size=5) +
+                 size=5, alpha = 0.8) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
       ylab(ynome)+
       xlab("Body Size [mg] \n log10 scale")+
@@ -30,10 +30,10 @@
                                        shape = tratamento))+
       geom_smooth(method = "lm") + 
       geom_point(aes(fill=factor(tratamento)),
-                 size=5, alpha = 0.5) +
+                 size=5, alpha = 0.8) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
       ylab(ynome)+
-      xlab("Body Size [mg], log10 scale")+
+      xlab("Body Size [mg]")+
       ggtitle(title)+
       labs(fill = "Treatment", shape = "Treatment")+
       theme_classic()+ scale_shape_manual(values = c(21, 22), labels = c("Ambient", "Warmed")) +
@@ -55,7 +55,7 @@
                  size=5, alpha = 0.5) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
       ylab(ynome)+
-      xlab("Body Size [mg], log10 scale")+
+      xlab("Body Size [mg]")+
       ggtitle(title)+
       labs(fill = "Treatment", shape = "Treatment")+
       theme_classic()+ scale_shape_manual(values = c(21, 22), labels = c("Ambient", "Warmed")) +
@@ -111,6 +111,11 @@ log10neg <- function(x){
   ifelse(test = is.na(x), yes = NA,
          no = ifelse(test = x == 0, yes = 0,
                      no = ifelse(test = x>0, yes = log10(x), no = (-log10(-x)))))
+}
+logneg <- function(x){
+  ifelse(test = is.na(x), yes = NA,
+         no = ifelse(test = x == 0, yes = 0,
+                     no = ifelse(test = x>0, yes = log(x), no = (-log(-x)))))
 }
 
 
