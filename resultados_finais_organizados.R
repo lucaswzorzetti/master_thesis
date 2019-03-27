@@ -56,7 +56,7 @@
         geom_point(size = 5, alpha = 0.5, shape = 21)+
         scale_x_discrete(limits = c("Belostomatidae", "Anisoptera",
                                     "Zygoptera", "Notonectidae")) +
-        xlab("Taxa") + ylab("Biomass [mg]")+
+        xlab("Taxa") + ylab(expression(paste("Biomass [mg]")))+
         theme_classic() + theme(legend.position = "none",
                                 axis.text = element_text(face = "bold",
                                                          size = 12, colour = "black"),
@@ -612,58 +612,23 @@
                  bg = "white",  res = 300)
             belo_pres
             dev.off()
+        
             
             
-            #Notonectidae
-            noto_pres_lme_int <- lme(log(Totalpresascorrigido) ~ log(biomassa_mg)*tratamento,
-                                     random = ~1|bloco, data = notonectidae,
-                                     weights = varIdent(form = ~ 1 | tratamento),
-                                     na.action = na.omit)
-            summary(noto_pres_lme_int)
-            
-            Anova(noto_pres_lme_int, type = "III") #inter nao signi
-            
-            noto_pres_lme <- lme(log(Totalpresascorrigido) ~ log(biomassa_mg) + tratamento,
-                                 random = ~1|bloco, data = notonectidae, na.action = na.omit,
-                                 weights = varIdent(form = ~ 1 | tratamento))
-            
-            summary(noto_pres_lme)
-            
-            Anova(noto_pres_lme, type = "II")
-            
-            plot(lm(log(Totalpresascorrigido) ~ log(biomassa_mg)+ tratamento, data = notonectidae))
-            
-            shapiro.test(resid(noto_pres_lme))
-            
-            notonectidae$Totalpresascorrigido[16] <- NA
-            notonectidae$Totalpresascorrigido[8] <- NA
-            
-            #Figura
-            noto_pres <- model_line(notonectidae, notonectidae$biomassa_mg,
-                                    (notonectidae$totalpresasperdiag+1),
-                                    "N° prey consumed/day", noto_pres_lme, "Notonectidae") +
-              annotation_logticks() + theme(legend.position = c(0.8, 0.8))
-            noto_pres
-            
-            jpeg(filename = "pres_noto.jpg", width = 2350, height = 1900, 
-                 units = "px", pointsize = 12, quality = 100,
-                 bg = "white",  res = 300)
-            noto_pres
-            dev.off()
-            
-            
-            
-            #Anisoptera
-            aniso_pres_lme_int <- lme(log(Totalpresascorrigido) ~ log(biomassa_mg)*tratamento,
-                                      random = ~1|bloco, data = anisoptera, na.action = na.omit,
-                                      weights = varIdent(form = ~ 1 | tratamento))
+        #Anisoptera
+            aniso_pres_lme_int <- lmer(log10(Totalpresascorrigido) ~ log10(biomassa_mg)*tratamento + (1|bloco),
+                                       data = anisoptera, na.action = na.omit)
             summary(aniso_pres_lme_int)
             
-            Anova(aniso_pres_lme_int, type = "III") #sem inter
+            Anova(aniso_pres_lme_int, type = "III") #com inter
             
-            aniso_pres_lme <- lme(log(Totalpresascorrigido) ~ log(biomassa_mg) + tratamento,
-                                  random = ~1|bloco, data = anisoptera, na.action = na.omit,
-                                  weights = varIdent(form = ~ 1 | tratamento))
+            plot(aniso_pres_lme_int)
+            shapiro.test(resid(aniso_pres_lme_int))
+            
+            plot(sort(cooks.distance(aniso_pres_lme_int)))
+            
+            aniso_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                  data = anisoptera, na.action = na.omit)
             
             summary(aniso_pres_lme)
             
@@ -671,20 +636,20 @@
             
             plot(aniso_pres_lme)
             
-            plot(lm(log(Totalpresascorrigido) ~ log(biomassa_mg) + tratamento, data = anisoptera))
-            
             shapiro.test(resid(aniso_pres_lme))
             
-            anisoptera$Totalpresascorrigido[28] <- NA #pesquisar melhor isso (tá dificil de normalizar)
-            anisoptera$Totalpresascorrigido[30] <- NA
-            anisoptera$Totalpresascorrigido[16] <- NA
-            anisoptera$Totalpresascorrigido[29] <- NA
+            plot(sort(cooks.distance(aniso_pres_lme)))
+            
+            anisoptera$Totalpresascorrigido[28] <- NA #outlier: ~1
+            anisoptera$Totalpresascorrigido[30] <- NA # >0.5 só com ele fica marginalmente normal
+            
             
             #Figura
-            aniso_pres <- model_line(anisoptera, anisoptera$biomassa_mg, (anisoptera$Totalpresascorrigido),
+            aniso_pres <- model_line(anisoptera, log10(anisoptera$biomassa_mg), (anisoptera$Totalpresascorrigido),
                                      "N° prey consumed/day",
                                      aniso_pres_lme_int, "Anisoptera") + annotation_logticks()+
-              theme(legend.position = c(0.8, 0.8))
+              scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.698, 2),
+                                 labels = c(5, 10, 20, 50, 100))
             aniso_pres
             
             jpeg(filename = "pres_aniso.jpg", width = 2350, height = 1900, 
@@ -694,35 +659,28 @@
             dev.off()
             
             #Zygoptera
-            zygo_pres_lme_int <- lme(log(Totalpresascorrigido+1) ~ log(biomassa_mg)*tratamento,
-                                     random = ~1|bloco, data = zygoptera, na.action = na.omit,
-                                     weights = varIdent(form = ~ 1 | tratamento))
+            zygo_pres_lme_int <- lmer(Totalpresascorrigido ~ biomassa_mg*tratamento + (1|bloco),
+                                      data = zygoptera, na.action = na.omit)
             summary(zygo_pres_lme_int)
             
-            Anova(zygo_pres_lme_int, type = "III")
+            Anova(zygo_pres_lme_int, type = "III") #tem inter sem logs
             
-            zygo_pres_lme <- lme(log(Totalpresascorrigido+1) ~ log(biomassa_mg) + tratamento,
-                                 random = ~1|bloco, data = zygoptera, na.action = na.omit,
-                                 weights = varIdent(form = ~ 1 | tratamento))
+            plot(sort(cooks.distance(zygo_pres_lme_int)))
+            shapiro.test(resid(zygo_pres_lme_int))
+            
+            zygo_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit)
             
             summary(zygo_pres_lme)
             
             Anova(zygo_pres_lme, type = "II")
             
-            plot(lm(log(Totalpresascorrigido+1) ~ log(biomassa_mg) + tratamento, data = zygoptera))
-            
             shapiro.test(resid(zygo_pres_lme))
             
-            zygoptera$Totalpresascorrigido[9] <- NA
-            zygoptera$Totalpresascorrigido[31] <- NA
-            zygoptera$Totalpresascorrigido[27] <- NA
-            zygoptera$Totalpresascorrigido[4] <- NA
-            zygoptera$Totalpresascorrigido[32] <- NA
-            
             #Figura
-            zygo_pres <-  model_line(zygoptera, zygoptera$biomassa_mg, (zygoptera$Totalpresascorrigido+1),
+            zygo_pres <-  model_line_semlog(zygoptera, zygoptera$biomassa_mg, (zygoptera$Totalpresascorrigido+1),
                                      "N° prey consumed/day", zygo_pres_lme,
-                                     "Zygoptera") + annotation_logticks()+theme(legend.position = c(0.8, 0.8))
+                                     "Zygoptera")
             zygo_pres
             
             jpeg(filename = "pres_zygo.jpg", width = 2350, height = 1900, 
@@ -730,11 +688,127 @@
                  bg = "white",  res = 300)
             zygo_pres
             dev.off()
+            
+            
+            
+            #Notonectidae
+            noto_pres_lme_int <- lmer(Totalpresascorrigido ~ log(biomassa_mg)*tratamento + 
+                                        (1|bloco), data = notonectidae,
+                                      na.action = na.omit)
+            summary(noto_pres_lme_int)
+            
+            Anova(noto_pres_lme_int, type = "III") #inter nao signi
+            
+            noto_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + 
+                                    (1|bloco), data = notonectidae, na.action = na.omit)
+            
+            summary(noto_pres_lme)
+            
+            Anova(noto_pres_lme, type = "II")
+            
+            shapiro.test(resid(noto_pres_lme))
+            
+            plot(sort(cooks.distance(noto_pres_lme)))
+            
+            notonectidae$Totalpresascorrigido[16] <- NA #outlier > 1.5
+            notonectidae$Totalpresascorrigido[8] <- NA #não djanta, só tirando que normaliza
+            
+            #Figura
+            noto_pres <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+                                    notonectidae$Totalpresascorrigido,
+                                    "N° prey consumed/day", noto_pres_lme, "Notonectidae")+
+              scale_x_continuous(breaks = c(0.845, 1, 1.176, 1.301),
+                                 labels = c(7, 10, 15, 20), limits = c(0.8,1.35)) +
+              scale_y_continuous(breaks = c(0.8, 1, 1.25, 1.5, 1.75, 2),
+                                 labels = c(0.8, 1, 1.25, 1.5, 1.75, 2))
+            noto_pres
+            
+            jpeg(filename = "pres_noto.jpg", width = 2350, height = 1900, 
+                 units = "px", pointsize = 12, quality = 100,
+                 bg = "white",  res = 300)
+            noto_pres
+            dev.off()
+            
 
                 
                 
 
 # Models of Growth rate ---------------------------------------------------
+  #Belostomatidae
+      belo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                 data = belostomatidae, na.action = na.omit)
+      summary(belo_cresc_lme_int)
+      
+      Anova(belo_cresc_lme_int, "III")
+      
+      r.squaredGLMM(belo_cresc_lme_int)
+      
+      shapiro.test(resid(belo_cresc_lme_int)) #de bom tamanho já
+      plot(sort(cooks.distance(belo_cresc_lme_int))) 
+      
+      belo_cresc_lme <- lmer(taxacrescimento ~ biomassa_mg + tratamento + (1|bloco),
+                             data = belostomatidae, na.action = na.omit)
+      summary(belo_cresc_lme)
+      Anova(belo_cresc_lme)
+      
+      shapiro.test(resid(belo_cresc_lme))
+      plot(sort(cooks.distance(belo_cresc_lme)))
+      
+      #Figure
+      belo_cresc <-  model_line(belostomatidae, log10(belostomatidae$biomassa_mg), 
+                                log10(belostomatidae$taxacrescimento),
+                                ynome = "Growth rate, log10 scale", 
+                                model = belo_cresc_lme_int,
+                                title = "Belostomatidae") + annotation_logticks() +
+        geom_hline(yintercept = 0, linetype = 3)
+      belo_cresc
+        #saving
+        jpeg(filename = "growth_belos.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        belo_cresc
+        dev.off()
 
+  #Anisoptera
+        aniso_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                    data = anisoptera, na.action = na.omit)
+        summary(aniso_cresc_lme_int)
+        
+        Anova(aniso_cresc_lme_int, "III")
+        
+        aniso_cresc_lme <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                    data = anisoptera, na.action = na.omit)
+        summary(aniso_cresc_lme)
+        Anova(aniso_cresc_lme)
+        
+        shapiro.test(resid(aniso_cresc_lme))
+        
+        plot(sort(cooks.distance(aniso_cresc_lme)))
+
+        anisoptera$taxacrescimento[4] <- NA
+        anisoptera$taxacrescimento[16] <- NA
+        
+        #Figure
+        aniso_cresc <-  model_line(anisoptera, log10(anisoptera$biomassa_mg), 
+                                  log10(anisoptera$taxacrescimento),
+                                  ynome = "Growth rate, log10 scale", 
+                                  model = belo_cresc_lme_int,
+                                  title = "Belostomatidae") + annotation_logticks() +
+          scale_x_continuous()
+        aniso_cresc
+
+          #saving
+          jpeg(filename = "growth_aniso.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          belo_cresc
+          dev.off()
+            
+            
+            
+            
+            
+            
+            
 
                 
