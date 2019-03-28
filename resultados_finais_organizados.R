@@ -14,6 +14,7 @@
     library(knitr) #tables
     library(predictmeans) #functions for diagnostics of models
     library(MuMIn) #R²m and R²c
+    library(gnlm) #Non linear regressions
 
   #Importing 
     geral <- read.table("planilhageral_atualizada2.txt", header = T, colClasses = c(
@@ -367,11 +368,22 @@
           
 
 # Models of Proportion of Captured Prey -----------------------------------
-
-
+  #Belostomatidae
+    belo_prop_bnlm <- bnlr(y = cbind(belostomatidae$presas_consumidas_gravacao,
+                                     3-belostomatidae$presas_consumidas_gravacao), 
+                           mu = ~belostomatidae$tratamento, pmu = c(0,1))
+    Anova(belo_prop_bnlm)
+                
+    
+    gnlmm(llik = )
+                
+                
+                
+                
+                
                 
 
-
+                
 # Models of Handling Time -------------------------------------------------
   #Belostomatidae: no measures
                 
@@ -770,13 +782,13 @@
         dev.off()
 
   #Anisoptera
-        aniso_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+        aniso_cresc_lme_int <- lmer(taxacrescimento ~ log(biomassa_mg)*tratamento + (1|bloco),
                                     data = anisoptera, na.action = na.omit)
         summary(aniso_cresc_lme_int)
         
         Anova(aniso_cresc_lme_int, "III")
         
-        aniso_cresc_lme <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
+        aniso_cresc_lme <- lmer(log(taxacrescimento) ~ biomassa_mg + tratamento + (1|bloco),
                                     data = anisoptera, na.action = na.omit)
         summary(aniso_cresc_lme)
         Anova(aniso_cresc_lme)
@@ -789,26 +801,110 @@
         anisoptera$taxacrescimento[16] <- NA
         
         #Figure
-        aniso_cresc <-  model_line(anisoptera, log10(anisoptera$biomassa_mg), 
+        aniso_cresc <-  model_line_semlog(anisoptera, anisoptera$biomassa_mg, 
                                   log10(anisoptera$taxacrescimento),
-                                  ynome = "Growth rate, log10 scale", 
+                                  ynome = "Growth rate [proportion] \n log10 scale", 
                                   model = belo_cresc_lme_int,
-                                  title = "Belostomatidae") + annotation_logticks() +
-          scale_x_continuous()
+                                  title = "Anisoptera")+
+          scale_y_continuous(breaks = c(-0.0044, 0, 0.0043, 0.0086, 0.0128, 0.017, 0.0212, 0.0253),
+                             labels = c(0.99, 1, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06)) +
+          geom_hline(yintercept = 0, linetype = 3)
         aniso_cresc
 
           #saving
           jpeg(filename = "growth_aniso.jpg", width = 2350, height = 1900, 
                units = "px", pointsize = 12, quality = 100,
                bg = "white",  res = 300)
-          belo_cresc
+          aniso_cresc
           dev.off()
+          
+  #Zygoptera
+      zygo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit)
+      summary(zygo_cresc_lme_int)
+      
+      Anova(zygo_cresc_lme_int, "III")
+      
+      zygo_cresc_lme <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit)
+      summary(zygo_cresc_lme)
+      Anova(zygo_cresc_lme)
+      
+      plot(zygo_cresc_lme)
+      
+      shapiro.test(resid(zygo_cresc_lme))
+      
+      plot(sort(cooks.distance(zygo_cresc_lme)))
+      
+      zygoptera$taxacrescimento[24] <- NA #outlier > 0.8
+      
+      #Figure
+          zygo_cresc <-  model_line(zygoptera, log10(zygoptera$biomassa_mg), 
+                                            log10(zygoptera$taxacrescimento),
+                                            ynome = "Growth rate [proportion] \n log10 scale", 
+                                            model = zygo_cresc_lme,
+                                            title = "Zygoptera")+
+            scale_x_continuous(breaks = c(0.778, 1, 1.301, 1.477),
+                               labels = c(6, 10, 20, 30))+
+            scale_y_continuous(breaks = c(-0.0223,-0.0088, 0, 0.0086, 0.0212, 0.0334, 0.0414),
+                               labels = c(0.95, 0.98, 1, 1.02, 1.05, 1.08, 1.10)) +
+            annotation_logticks()+
+            geom_hline(yintercept = 0, linetype = 3)
+          zygo_cresc     
             
-            
-            
-            
-            
-            
+          #saving
+          jpeg(filename = "growth_zygo.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          zygo_cresc
+          dev.off()  
+
+        
+  #Notonectidae
+      noto_cresc_lme_int <- lmer(taxacrescimento ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit)
+      summary(noto_cresc_lme_int)
+      
+      Anova(noto_cresc_lme_int, "III")
+      
+      noto_cresc_lme <- lmer(taxacrescimento ~ log(biomassa_mg) + tratamento + (1|bloco),
+                             data = zygoptera, na.action = na.omit)
+      
+      summary(noto_cresc_lme)
+      Anova(noto_cresc_lme)
+      
+      plot(noto_cresc_lme)
+      shapiro.test(resid(noto_cresc_lme))
+      
+      plot(sort(cooks.distance(noto_cresc_lme)))
+      
+      #Figure
+        noto_cresc <-  model_line(notonectidae, log10(notonectidae$biomassa_mg), 
+                                  (notonectidae$taxacrescimento),
+                                  ynome = "Growth rate [proportion]", 
+                                  model = noto_cresc_lme,
+                                  title = "Notonectidae")+
+          scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.477, 1.602),
+                             labels = c(5, 10, 20, 30, 40))+
+          scale_y_continuous() +
+          annotation_logticks()
+        noto_cresc 
+         
+        #saving
+        jpeg(filename = "growth_noto.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        noto_cresc
+        dev.off()   
             
 
+      
+      
+      
+      
+      
+      
+      
+      
+      
                 
