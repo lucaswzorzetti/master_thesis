@@ -102,9 +102,10 @@
       belo_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
                                    data = belostomatidae, na.action = na.omit)
       summary(belo_temcap1_lme_int) #com interação
-      belo_temcap1_table <- Anova(belo_temcap1_lme_int, type = "III", digits = 8,
-                                  style = "long")
+      belo_temcap1_table <- Anova(belo_temcap1_lme_int, type = "III")
       belo_temcap1_table
+      
+      print(belo_temcap1_table, digits =4)
       
       r.squaredGLMM(belo_temcap1_lme_int)
       
@@ -135,7 +136,7 @@
       aniso_temcap1_lme_int_table <- Anova(aniso_temcap1_lme_int, type = "III") #interaction confirmed
       aniso_temcap1_lme_int_table
       
-      r.squared.GLMM(aniso_temcap1_lme_int)
+      r.squaredGLMM(aniso_temcap1_lme_int)
       
           
       plot(aniso_temcap1_lme_int)
@@ -178,6 +179,7 @@
       
       zygo_temcap1_lme_table <- Anova(zygo_temcap1_lme)
       zygo_temcap1_lme_table
+      r.squaredGLMM(zygo_temcap1_lme)
       
       plot(zygo_temcap1_lme)
       shapiro.test(resid(zygo_temcap1_lme))
@@ -214,6 +216,8 @@
           
       noto_temcap1_lme_table <- Anova(noto_temcap1_lme)
       noto_temcap1_lme_table
+      r.squaredGLMM(noto_temcap1_lme)
+      
       plot(noto_temcap1_lme)
           
       shapiro.test(resid(noto_temcap1_lme))
