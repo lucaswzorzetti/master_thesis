@@ -187,10 +187,23 @@
       sort(cooks.distance(zygo_temcap1_lme))
       plot(sort(cooks.distance(zygo_temcap1_lme)))
       
+        #modelo sem tratamento
+        zygo_temcap1_lme_notreat <- lmer(log(tempocap1) ~ log(biomassa_mg) + (1|bloco),
+                                         data = zygoptera, na.action = na.omit)
+        zygo_temcap1_lme_notreat_table <- Anova(zygo_temcap1_lme_notreat)
+        zygo_temcap1_lme_notreat_table
+        
+        r.squaredGLMM(zygo_temcap1_lme_notreat)
+        shapiro.test(resid(zygo_temcap1_lme_notreat))
+        
+      
+      
+      
         #Figure
-          zygo_temcap1 <- model_line(zygoptera, log10(zygoptera$biomassa_mg), log10(zygoptera$tempocap1), 
-                                     "Time of first capture [s], log10 scale", zygo_temcap1_lme,
-                                     "Zygoptera")+
+          zygo_temcap1 <- model_line_noline(zygoptera, log10(zygoptera$biomassa_mg), log10(zygoptera$tempocap1), 
+                                     "Time of first capture [s] \n log10 scale",
+                                     "Body Size [mg] log10scale",
+                                     title = "Zygoptera")+
             scale_x_continuous(breaks = c(1, 1.3, 1.48), labels = c(10, 20, 30),
                                limits = c(0.8, 1.50)) +
             scale_y_continuous(breaks = c(1, 2, 3, 3.7), labels = c(10, 100, 1000, 5000),
@@ -225,9 +238,25 @@
       plot(sort(cooks.distance(noto_temcap1_lme)))
           
       notonectidae$tempocap1[13] <- NA #outlier removing
+      notonectidae$tempocap1[17] <- NA
+      notonectidae$tempocap1[11] <- NA
+      notonectidae$tempocap1[14] <- NA
+      
+        #modelo sem tratamento
+        noto_temcap1_lme_notrat <- lmer(log(tempocap1) ~ log(biomassa_mg)+ (1|bloco),
+                                         data = notonectidae, na.action = na.omit)
+        noto_temcap1_lme_notrat_table <- Anova(noto_temcap1_lme_semtrat)
+        noto_temcap1_lme_notrat_table
+        
+        shapiro.test(resid(noto_temcap1_lme_notrat)) #vou deixar como efeito marginal e 
+        r.squaredGLMM(noto_temcap1_lme_notrat)       #fazer com o trat mesmo
+        
+        sort(cooks.distance(noto_temcap1_lme_notrat))
+        plot(sort(cooks.distance(noto_temcap1_lme_notrat)))
+        
           
           #figure
-          noto_temcap1 <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+          noto_temcap1 <- model_line_1line(notonectidae, log10(notonectidae$biomassa_mg),
                                      log10(notonectidae$tempocap1), 
                                      "Time of first capture [s] \n log10 scale", noto_temcap1_lme, "Notonectidae")+
             scale_x_continuous(breaks = c(0.84, 1, 1.18,1.30), labels = c(7 ,10, 15, 20),
@@ -295,9 +324,22 @@
           
           anisoptera$dif_temp_cap[16] <- NA # outlier: cd >1.5
           
+          #modelo sem tratamento
+          aniso_diftemcap_lme_notrat <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)+ 
+                                               (1|bloco),
+                                          data = anisoptera, na.action = na.omit)
+          aniso_diftemcap_lme_notrat_table <- Anova(aniso_diftemcap_lme_notrat)
+          aniso_diftemcap_lme_notrat_table
+          
+          shapiro.test(resid(aniso_diftemcap_lme_notrat))
+          plot(sort(cooks.distance(aniso_diftemcap_lme_notrat)))
+          
+          r.squaredGLMM(aniso_diftemcap_lme_notrat)
+          
+          
           
             #Figure
-              aniso_diftemcap <- model_line(anisoptera, log10(anisoptera$biomassa_mg),
+              aniso_diftemcap <- model_line_1line(anisoptera, log10(anisoptera$biomassa_mg),
                                          log10neg(anisoptera$dif_temp_cap), 
                                          "Difference of Capture Times [s]\n log10 scale",
                                          noto_temcap1_lme, "Anisoptera")+
@@ -338,9 +380,21 @@
               
               #zygoptera$dif_temp_cap[2] <- NA #para caso de precisar
               
+              #modelo sem tratamento
+              zygo_diftemcap_lme_notrat <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg) +
+                                                  (1|bloco),
+                                                data = zygoptera, na.action = na.omit)
+              zygo_diftemcap_lme_notrat_table <- Anova(zygo_diftemcap_lme_notrat)
+              zygo_diftemcap_lme_notrat_table
+              
+              shapiro.test(resid(zygo_diftemcap_lme_notrat))
+              
+              r.squaredGLMM(zygo_diftemcap_lme_notrat)
+              
+              
               
               #Figure
-                zygo_diftemcap <- model_line(zygoptera, log10(zygoptera$biomassa_mg),
+                zygo_diftemcap <- model_line_noline(zygoptera, log10(zygoptera$biomassa_mg),
                                              log10neg(zygoptera$dif_temp_cap), 
                                               "Difference of Capture Times [s]\n log10 scale",
                                              noto_temcap1_lme, "Zygoptera")+
