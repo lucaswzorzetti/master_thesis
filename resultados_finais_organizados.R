@@ -464,8 +464,19 @@
                 
                 plot(sort(cooks.distance(aniso_temp_lme)))
                 
+                #modelo sem tratamento
+                aniso_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) +
+                                                (1|bloco),
+                                              data = anisoptera, na.action = na.omit)
+                Anova(aniso_temp_lme_notrat)
+                
+                shapiro.test(resid(aniso_temp_lme_notrat))
+                plot(sort(cooks.distance(aniso_temp_lme)))
+                
+                r.squaredGLMM(aniso_temp_lme_notrat)
+                
                 #Figure
-                    aniso_temp <- model_line(anisoptera, log10(anisoptera$biomassa_mg),
+                    aniso_temp <- model_line_1line(anisoptera, log10(anisoptera$biomassa_mg),
                                                   log10(anisoptera$tempomanip1), 
                                                   "Handling Time [s]\n log10 scale",
                                                   noto_temcap1_lme, "Anisoptera")+
@@ -503,8 +514,20 @@
                     
                     plot(sort(cooks.distance(zygo_temp_lme)))
                     
+                  #modelo sem tratamento
+                    zygo_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg)+ (1|bloco),
+                                          data = zygoptera, na.action = na.omit)
+                    Anova(zygo_temp_lme_notrat)
+                    
+                    shapiro.test(resid(zygo_temp_lme_notrat))
+                    plot(sort(cooks.distance(zygo_temp_lme_notrat)))
+                    
+                    r.squaredGLMM(zygo_temp_lme_notrat)
+                    
+                    
+                    
                     #Figure
-                        zygo_temp <- model_line(zygoptera, log10(zygoptera$biomassa_mg),
+                        zygo_temp <- model_line_1line(zygoptera, log10(zygoptera$biomassa_mg),
                                                  log10(zygoptera$tempomanip1), 
                                                  "Handling Time [s]\n log10 scale",
                                                  noto_temcap1_lme, "Zygoptera")+
@@ -543,10 +566,21 @@
                         
                         plot(sort(cooks.distance(noto_temp_lme))) #one point ~0.89
                         
-                        #notonectidae$tempomanip1[14] <- NA #não sei se precisa...
+                        notonectidae$tempomanip1[14] <- NA #precisa no sem trat
+                        notonectidae$tempomanip1[29] <- NA
                         
+                #modelo sem tratamento - dexa quieto
+                    noto_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
+                                              data = notonectidae,na.action = na.omit)
+                    Anova(noto_temp_lme_notrat)
+                    
+                    shapiro.test(resid(noto_temp_lme_notrat))
+                    
+                    plot(sort(cooks.distance(noto_temp_lme_notrat)))
+                    
+                    
                         #Figure
-                          noto_temp <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+                          noto_temp <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
                                                   log10(notonectidae$tempomanip1), 
                                                   "Handling Time [s]\n log10 scale",
                                                   noto_temcap1_lme, "Notonectidae")+
@@ -795,8 +829,13 @@
             notonectidae$Totalpresascorrigido[16] <- NA #outlier > 1.5
             notonectidae$Totalpresascorrigido[8] <- NA #não djanta, só tirando que normaliza
             
+            #modelo sem trat
+            noto_pres_lme_notrat <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + 
+                                    (1|bloco), data = notonectidae, na.action = na.omit)
+            Anova(noto_pres_lme_notrat)
+            
             #Figura
-            noto_pres <- model_line(notonectidae, log10(notonectidae$biomassa_mg),
+            noto_pres <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
                                     notonectidae$Totalpresascorrigido,
                                     "N° prey consumed/day", noto_pres_lme, "Notonectidae")+
               scale_x_continuous(breaks = c(0.845, 1, 1.176, 1.301),
@@ -872,8 +911,19 @@
         anisoptera$taxacrescimento[4] <- NA
         anisoptera$taxacrescimento[16] <- NA
         
+        #modelo sem tratamento
+          aniso_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ biomassa_mg + (1|bloco),
+                                         data = anisoptera, na.action = na.omit)
+          Anova(aniso_cresc_lme_notrat)
+          
+          shapiro.test(resid(aniso_cresc_lme_notrat))
+          plot(sort(cooks.distance(aniso_cresc_lme_notrat)))
+          
+          r.squaredGLMM(aniso_cresc_lme_notrat)
+        
+        
         #Figure
-        aniso_cresc <-  model_line_semlog(anisoptera, anisoptera$biomassa_mg, 
+        aniso_cresc <-  model_line_semlog_1line(anisoptera, anisoptera$biomassa_mg, 
                                   log10(anisoptera$taxacrescimento),
                                   ynome = "Growth rate [proportion] \n log10 scale", 
                                   model = belo_cresc_lme_int,
@@ -912,8 +962,22 @@
       
       zygoptera$taxacrescimento[24] <- NA #outlier > 0.8
       
+      #modelo sem tratamento
+      zygo_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ log(biomassa_mg) +
+                                      (1|bloco),
+                             data = zygoptera, na.action = na.omit)
+      Anova(zygo_cresc_lme_notrat)
+      
+      shapiro.test(resid(zygo_cresc_lme_notrat))
+      
+      plot(sort(cooks.distance(zygo_cresc_lme_notrat)))
+      
+      r.squaredGLMM(zygo_cresc_lme_notrat)
+      
+      
+      
       #Figure
-          zygo_cresc <-  model_line(zygoptera, log10(zygoptera$biomassa_mg), 
+          zygo_cresc <-  model_line_1line(zygoptera, log10(zygoptera$biomassa_mg), 
                                             log10(zygoptera$taxacrescimento),
                                             ynome = "Growth rate [proportion] \n log10 scale", 
                                             model = zygo_cresc_lme,
@@ -954,8 +1018,20 @@
       
       plot(sort(cooks.distance(noto_cresc_lme)))
       
+      #modelo sem tratamento
+      noto_cresc_lme_notrat <- lmer(taxacrescimento ~ log(biomassa_mg) + (1|bloco),
+                             data = zygoptera, na.action = na.omit)
+      
+      Anova(noto_cresc_lme_notrat)
+      
+      r.squaredGLMM(noto_cresc_lme_notrat)
+      
+      shapiro.test(resid(noto_cresc_lme_notrat))
+      
+      plot(sort(cooks.distance(noto_cresc_lme_notrat)))
+      
       #Figure
-        noto_cresc <-  model_line(notonectidae, log10(notonectidae$biomassa_mg), 
+        noto_cresc <-  model_line_1line(notonectidae, log10(notonectidae$biomassa_mg), 
                                   (notonectidae$taxacrescimento),
                                   ynome = "Growth rate [proportion]", 
                                   model = noto_cresc_lme,
