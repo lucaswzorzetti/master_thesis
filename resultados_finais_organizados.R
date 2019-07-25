@@ -15,6 +15,8 @@
     library(predictmeans) #functions for diagnostics of models
     library(MuMIn) #R²m and R²c
     library(gnlm) #Non linear regressions
+    library(AICcmodavg) #tabelas de seleção de modelos
+    library(effsize)
 
   #Importing 
     geral <- read.table("planilhageral_atualizada2.txt", header = T, colClasses = c(
@@ -100,7 +102,7 @@
 # Models of First Capture Time --------------------------------------------
       #Belostomatidae 
       belo_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                   data = belostomatidae, na.action = na.omit)
+                                   data = belostomatidae, na.action = na.omit, REML = F) #Usei Maximum Likelihood para facilitar a comparação dos modelos
       summary(belo_temcap1_lme_int) #com interação
       belo_temcap1_table <- Anova(belo_temcap1_lme_int, type = "III")
       belo_temcap1_table
@@ -110,6 +112,26 @@
       r.squaredGLMM(belo_temcap1_lme_int)
       
       shapiro.test(resid(belo_temcap1_lme_int)) 
+      
+      leveneTest(belostomatidae$tempocap1, group = belostomatidae$tratamento) #testando a homocedasticidade (hipotese nula -> p>0.05)
+      
+      t.test(belostomatidae$tempocap1~belostomatidae$tratamento) #teste para mostrar que a covariavel não varia com o tratamento
+                                                      #o p-value > 0.05 para aceitar a hipotese nula (não há diferenças)
+      
+      AIC(belo_temcap1_lme_int)
+      
+      #Seleção de modelos
+      
+      belo_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg)+tratamento + (1|bloco),
+                                   data = belostomatidae, na.action = na.omit)
+      belo_temcap1_lme_notrat <- lmer(log(tempocap1) ~ log(biomassa_mg) + (1|bloco),
+                               data = belostomatidae, na.action = na.omit)
+      
+      aictab(c(belo_temcap1_lme, belo_temcap1_lme_int, belo_temcap1_lme_notrat),
+                 c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+      
+      #1-var(residuals(belo_temcap1_lme_int))/(var(model.response(model.frame(belo_temcap1_lme_int))))
+      cohen.d(d = belostomatidae$tempocap1, f = belostomatidae$tratamento, na.rm = T)
       
         #Figure
           belo_temcap1 <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg), log10(belostomatidae$tempocap1), 
@@ -183,6 +205,8 @@
       
       plot(zygo_temcap1_lme)
       shapiro.test(resid(zygo_temcap1_lme))
+      
+      leveneTest(residuals(zygo_temcap1_lme), group = zygoptera$tratamento)
       
       sort(cooks.distance(zygo_temcap1_lme))
       plot(sort(cooks.distance(zygo_temcap1_lme)))
