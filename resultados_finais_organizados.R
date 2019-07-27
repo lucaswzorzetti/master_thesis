@@ -54,6 +54,15 @@
       pare
 
 
+# testes prévios ----------------------------------------------------------
+    #para verificar se a covariavel nao varia com o tratamento
+      t.test(belostomatidae$biomassa_mg~belostomatidae$tratamento)
+      t.test(anisoptera$biomassa_mg~anisoptera$tratamento)
+      t.test(zygoptera$biomassa_mg~zygoptera$tratamento)
+      t.test(notonectidae$biomassa_mg~notonectidae$tratamento)
+      #todos OK
+      
+
 # Comparing biomasses between Taxa ----------------------------------------
       biomassas_todos <- geral %>% ggplot(aes(x = suborfam, y = biomassa_mg, fill = suborfam))+
         geom_point(size = 5, alpha = 0.5, shape = 21)+
@@ -113,26 +122,27 @@
       
       shapiro.test(resid(belo_temcap1_lme_int)) 
       
-      leveneTest(belostomatidae$tempocap1, group = belostomatidae$tratamento) #testando a homocedasticidade (hipotese nula -> p>0.05)
+      leveneTest(belostomatidae$tempocap1, center=mean, group = belostomatidae$tratamento) #testando a homocedasticidade (hipotese nula -> p>0.05)
       
-      t.test(belostomatidae$tempocap1~belostomatidae$tratamento) #teste para mostrar que a covariavel não varia com o tratamento
+      t.test(belostomatidae$biomassa_mg~belostomatidae$tratamento) #teste para mostrar que a covariavel não varia com o tratamento
                                                       #o p-value > 0.05 para aceitar a hipotese nula (não há diferenças)
       
       AIC(belo_temcap1_lme_int)
       
-      #Seleção de modelos
-      
-      belo_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg)+tratamento + (1|bloco),
-                                   data = belostomatidae, na.action = na.omit)
-      belo_temcap1_lme_notrat <- lmer(log(tempocap1) ~ log(biomassa_mg) + (1|bloco),
-                               data = belostomatidae, na.action = na.omit)
-      
-      aictab(c(belo_temcap1_lme, belo_temcap1_lme_int, belo_temcap1_lme_notrat),
-                 c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
-      
-      #1-var(residuals(belo_temcap1_lme_int))/(var(model.response(model.frame(belo_temcap1_lme_int))))
-      cohen.d(d = belostomatidae$tempocap1, f = belostomatidae$tratamento, na.rm = T)
-      
+        #Seleção de modelos
+        
+        belo_temcap1_lme <- lmer(log(tempocap1) ~ log(biomassa_mg)+tratamento + (1|bloco),
+                                     data = belostomatidae, na.action = na.omit, REML = F)
+        belo_temcap1_lme_notrat <- lmer(log(tempocap1) ~ log(biomassa_mg) + (1|bloco),
+                                 data = belostomatidae, na.action = na.omit, REML = F)
+        
+        aictab(c(belo_temcap1_lme, belo_temcap1_lme_int, belo_temcap1_lme_notrat),
+                   c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+        #omega 2 <- 1-var(residuals(belo_temcap1_lme_int))/(var(model.response(model.frame(belo_temcap1_lme_int))))
+        
+        cohen.d(d = belostomatidae$tempocap1, f = belostomatidae$tratamento, na.rm = T)
+        
         #Figure
           belo_temcap1 <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg), log10(belostomatidae$tempocap1), 
                                      "Time of 1º capture [s] \n log10 scale", belo_temcap1_lme, "Belostomatidae") +
@@ -150,9 +160,9 @@
           belo_temcap1
           dev.off()
           
-      #Anisoptera
+      ###Anisoptera
       aniso_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                        data = anisoptera, na.action = na.omit)
+                                        data = anisoptera, na.action = na.omit, REML = F)
       summary(aniso_temcap1_lme_int)
           
       aniso_temcap1_lme_int_table <- Anova(aniso_temcap1_lme_int, type = "III") #interaction confirmed
@@ -162,13 +172,23 @@
       
           
       plot(aniso_temcap1_lme_int)
-      View(sort(cooks.distance(aniso_temcap1_lme_int)))
+      
       plot(sort(cooks.distance(aniso_temcap1_lme_int)))
           
       shapiro.test(resid(aniso_temcap1_lme_int))
+      
+      leveneTest(anisoptera$tempocap1, center=mean, group = anisoptera$tratamento) #homocedasticidade
+      
+      t.test(anisoptera$biomassa_mg~anisoptera$tratamento) #covar n varia com o trat
           
       anisoptera$tempocap1[1] <- NA #cook D near 0.6, should I withdraw? it increases shapiro value
+      
+          #seleção de modelos
+          aniso_temcap1_lme <- 
+            
+          aniso_temcap1_lme_notrat <- 
           
+         
           #Figure
           aniso_temcap1 <- model_line(anisoptera, log10(anisoptera$biomassa_mg), log10(anisoptera$tempocap1), 
                                       "Time of first capture [s] \n log10 scale",
@@ -190,7 +210,7 @@
       
       #Zygoptera
       zygo_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                   data = zygoptera, na.action = na.omit)
+                                   data = zygoptera, na.action = na.omit, REML = F)
       summary(zygo_temcap1_lme_int)
       
       Anova(zygo_temcap1_lme_int, type = "III") #no interaction
@@ -206,10 +226,12 @@
       plot(zygo_temcap1_lme)
       shapiro.test(resid(zygo_temcap1_lme))
       
-      leveneTest(residuals(zygo_temcap1_lme), group = zygoptera$tratamento)
+      leveneTest(zygoptera$tempocap1, center=mean, group = zygoptera$tratamento) #homocedasticidade
       
       sort(cooks.distance(zygo_temcap1_lme))
       plot(sort(cooks.distance(zygo_temcap1_lme)))
+      
+      cohen.d(d = zygoptera$tempocap1, f = zygoptera$tratamento, na.rm = T)
       
         #modelo sem tratamento
         zygo_temcap1_lme_notreat <- lmer(log(tempocap1) ~ log(biomassa_mg) + (1|bloco),
@@ -243,7 +265,7 @@
       
       #Notonectidae
       noto_temcap1_lme_int <- lmer(log(tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                       data = notonectidae, na.action = na.omit)
+                                       data = notonectidae, na.action = na.omit, REML = F)
       summary(noto_temcap1_lme_int) 
       Anova(noto_temcap1_lme_int, type = "III") #no interaction
           
@@ -260,11 +282,15 @@
       shapiro.test(resid(noto_temcap1_lme))
           
       plot(sort(cooks.distance(noto_temcap1_lme)))
+      
+      leveneTest(notonectidae$tempocap1, center=mean, group = notonectidae$tratamento) #homocedasticidade
           
       notonectidae$tempocap1[13] <- NA #outlier removing
       notonectidae$tempocap1[17] <- NA
       notonectidae$tempocap1[11] <- NA
       notonectidae$tempocap1[14] <- NA
+      
+      cohen.d(d = notonectidae$tempocap1, f = notonectidae$tratamento, na.rm = T)
       
         #modelo sem tratamento
         noto_temcap1_lme_notrat <- lmer(log(tempocap1) ~ log(biomassa_mg)+ (1|bloco),
@@ -329,7 +355,7 @@
           
   #Anisoptera
           aniso_diftemcap_lme_int <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                       data = anisoptera, na.action = na.omit)
+                                       data = anisoptera, na.action = na.omit, REML = F)
           summary(aniso_diftemcap_lme_int)
           Anova(aniso_diftemcap_lme_int, type = "III") #no inter
           
@@ -340,11 +366,15 @@
           
           r.squaredGLMM(aniso_diftemcap_lme)
           
+          cohen.d(d = anisoptera$dif_temp_cap, f = anisoptera$tratamento, na.rm = T)
+          
           #Diagnostics
           shapiro.test(resid(aniso_diftemcap_lme))
           plot(aniso_diftemcap_lme)
            
           plot(sort(cooks.distance(aniso_diftemcap_lme)))  # one outlier
+          
+          leveneTest(anisoptera$dif_temp_cap, center=mean, group = anisoptera$tratamento) #homocedasticidade
           
           anisoptera$dif_temp_cap[16] <- NA # outlier: cd >1.5
           
@@ -384,7 +414,7 @@
           
   #Zygoptera
               zygo_diftemcap_lme_int <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                          data = zygoptera, na.action = na.omit)
+                                          data = zygoptera, na.action = na.omit, REML = F)
               summary(zygo_diftemcap_lme_int)
               Anova(zygo_diftemcap_lme_int, type = "III") #no inter
               
@@ -399,7 +429,11 @@
               shapiro.test(resid(zygo_diftemcap_lme)) #normal
               plot(zygo_diftemcap_lme)
               
+              cohen.d(d = anisoptera$dif_temp_cap, f = anisoptera$tratamento, na.rm = T)
+              
               plot(sort(cooks.distance(zygo_diftemcap_lme))) #one outlier (>1)
+              
+              leveneTest(zygoptera$dif_temp_cap, center=mean, group = zygoptera$tratamento) #homocedasticidade
               
               
               #zygoptera$dif_temp_cap[2] <- NA #para caso de precisar
@@ -471,7 +505,7 @@
                 
   #Anisoptera
     aniso_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                      data = anisoptera, na.action = na.omit)
+                                      data = anisoptera, na.action = na.omit, REML = F)
                 summary(aniso_temp_lme_int)  #sem interação
                 
                 Anova(aniso_temp_lme_int, type = "III")
@@ -487,6 +521,11 @@
                 shapiro.test(resid(aniso_temp_lme))
                 
                 plot(sort(cooks.distance(aniso_temp_lme)))
+                
+                cohen.d(d = anisoptera$tempomanip1, f = anisoptera$tratamento, na.rm = T)
+                
+                leveneTest(anisoptera$tempomanip1, center=mean, group = anisoptera$tratamento) #homocedasticidade
+                
                 
                 #modelo sem tratamento
                 aniso_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) +
@@ -521,13 +560,13 @@
                     
   #Zygoptera
      zygo_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                              data = zygoptera, na.action = na.omit)
+                              data = zygoptera, na.action = na.omit, REML = F)
                     summary(zygo_temp_lme_int) 
                     
                     Anova(zygo_temp_lme_int, type = "III") #no inter
                     
       zygo_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
-                            data = zygoptera, na.action = na.omit)
+                            data = zygoptera, na.action = na.omit, REML = F)
       
                     Anova(zygo_temp_lme)
                     
@@ -538,9 +577,13 @@
                     
                     plot(sort(cooks.distance(zygo_temp_lme)))
                     
+                    leveneTest(zygoptera$tempomanip1, center=mean, group = zygoptera$tratamento) #homocedasticidade
+                    
+                    cohen.d(d = zygoptera$tempomanip1, f = zygoptera$tratamento, na.rm = T)
+                    
                   #modelo sem tratamento
                     zygo_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg)+ (1|bloco),
-                                          data = zygoptera, na.action = na.omit)
+                                          data = zygoptera, na.action = na.omit, REML = F)
                     Anova(zygo_temp_lme_notrat)
                     
                     shapiro.test(resid(zygo_temp_lme_notrat))
@@ -570,13 +613,13 @@
                         dev.off()
   #Notonectidae
     noto_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                             data = notonectidae, na.action = na.omit)
+                             data = notonectidae, na.action = na.omit, REML = F)
                         summary(noto_temp_lme_int)
                         
                         Anova(noto_temp_lme_int, type = "III")#no inter
                         
     noto_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
-                         data = notonectidae,na.action = na.omit)
+                         data = notonectidae,na.action = na.omit, REML = F)
                         
                         summary(noto_temp_lme)
                         
@@ -588,14 +631,18 @@
                         
                         shapiro.test(resid(noto_temp_lme))
                         
+                        leveneTest(notonectidae$tempomanip1, center=mean, group = notonectidae$tratamento) #homocedasticidade
+                        
                         plot(sort(cooks.distance(noto_temp_lme))) #one point ~0.89
                         
                         notonectidae$tempomanip1[14] <- NA #precisa no sem trat
                         notonectidae$tempomanip1[29] <- NA
                         
+                        cohen.d(d = notonectidae$tempomanip1, f = notonectidae$tratamento, na.rm = T)
+                        
                 #modelo sem tratamento - dexa quieto
                     noto_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
-                                              data = notonectidae,na.action = na.omit)
+                                              data = notonectidae,na.action = na.omit, REML = F)
                     Anova(noto_temp_lme_notrat)
                     
                     shapiro.test(resid(noto_temp_lme_notrat))
@@ -633,14 +680,14 @@
                           
   #Anisoptera
       aniso_diftemp_lme_int <- lmer(dif_temp_manip ~ biomassa_mg*tratamento +
-                                      (1|bloco), data = anisoptera, na.action = na.omit)
+                                      (1|bloco), data = anisoptera, na.action = na.omit, REML = F)
       aniso_diftemp_lme_int                    
                           
       summary(aniso_diftemp_lme_int) 
       Anova(aniso_diftemp_lme_int, "III")
       
       aniso_diftemp_lme <- lmer(dif_temp_manip ~ biomassa_mg + tratamento +
-                                  (1|bloco), data = anisoptera, na.action = na.omit)
+                                  (1|bloco), data = anisoptera, na.action = na.omit, REML = F)
       summary(aniso_diftemp_lme)
       Anova(aniso_diftemp_lme)
       
@@ -670,7 +717,7 @@
                           
   #Zygoptera
       zygo_diftemp_lme_int <- lmer(logneg(dif_temp_manip) ~ log(biomassa_mg)*tratamento +
-                                     (1|bloco), data = zygoptera, na.action = na.omit)
+                                     (1|bloco), data = zygoptera, na.action = na.omit, REML = F)
       summary(zygo_diftemp_lme_int)
       
       Anova(zygo_diftemp_lme_int, "III")
@@ -713,13 +760,13 @@
 # Models of Total Consumption ----------------------------------------------
     #Belostomatidae
             belo_pres_lme_int <- lmer(Totalpresascorrigido ~ log(biomassa_mg)*tratamento +
-                                       (1|bloco), data = belostomatidae, na.action = na.omit)
+                                       (1|bloco), data = belostomatidae, na.action = na.omit, REML = F)
             summary(belo_pres_lme_int) 
             
             Anova(belo_pres_lme_int, type = "III") #no inter
             
             belo_pres_lme <-  lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + 
-                                    (1|bloco), data = belostomatidae, na.action = na.omit) 
+                                    (1|bloco), data = belostomatidae, na.action = na.omit, REML = F) 
             summary(belo_pres_lme)
             
             Anova(belo_pres_lme)
@@ -728,9 +775,13 @@
             
             shapiro.test(resid(belo_pres_lme))
             
+            leveneTest(belostomatidae$Totalpresascorrigido, center=mean, group = belostomatidae$tratamento) #homocedasticidade #opa, esse ai nao deu
+            
             plot(belo_pres_lme)
             
             plot(sort(cooks.distance(belo_pres_lme))) #sem outliers
+            
+            cohen.d(d = belostomatidae$Totalpresascorrigido, f = belostomatidae$tratamento, na.rm = T)
             
             #figura
             belo_pres <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg),
@@ -751,7 +802,7 @@
             
         #Anisoptera
             aniso_pres_lme_int <- lmer(log10(Totalpresascorrigido) ~ log10(biomassa_mg)*tratamento + (1|bloco),
-                                       data = anisoptera, na.action = na.omit)
+                                       data = anisoptera, na.action = na.omit, REML = F)
             summary(aniso_pres_lme_int)
             
             Anova(aniso_pres_lme_int, type = "III") #com inter
@@ -761,10 +812,12 @@
             plot(aniso_pres_lme_int)
             shapiro.test(resid(aniso_pres_lme_int))
             
+            leveneTest(anisoptera$Totalpresascorrigido, center=mean, group = anisoptera$tratamento) #homocedasticidade
+            
             plot(sort(cooks.distance(aniso_pres_lme_int)))
             
             aniso_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + (1|bloco),
-                                  data = anisoptera, na.action = na.omit)
+                                  data = anisoptera, na.action = na.omit, REML = F)
             
             summary(aniso_pres_lme)
             
@@ -779,6 +832,7 @@
             anisoptera$Totalpresascorrigido[28] <- NA #outlier: ~1
             anisoptera$Totalpresascorrigido[30] <- NA # >0.5 só com ele fica marginalmente normal
             
+            cohen.d(d = anisoptera$Totalpresascorrigido, f = anisoptera$tratamento, na.rm = T)
             
             #Figura
             aniso_pres <- model_line(anisoptera, log10(anisoptera$biomassa_mg), (anisoptera$Totalpresascorrigido),
@@ -796,7 +850,7 @@
             
         #Zygoptera
             zygo_pres_lme_int <- lmer(Totalpresascorrigido ~ biomassa_mg*tratamento + (1|bloco),
-                                      data = zygoptera, na.action = na.omit)
+                                      data = zygoptera, na.action = na.omit, REML = F)
             summary(zygo_pres_lme_int)
             
             Anova(zygo_pres_lme_int, type = "III") #tem inter sem logs
@@ -806,14 +860,18 @@
             plot(sort(cooks.distance(zygo_pres_lme_int)))
             shapiro.test(resid(zygo_pres_lme_int))
             
+            leveneTest(zygoptera$Totalpresascorrigido, center=mean, group = zygoptera$tratamento) #homocedasticidade
+            
             zygo_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + (1|bloco),
-                                 data = zygoptera, na.action = na.omit)
+                                 data = zygoptera, na.action = na.omit, REML = F)
             
             summary(zygo_pres_lme)
             
             Anova(zygo_pres_lme, type = "II")
             
             shapiro.test(resid(zygo_pres_lme))
+            
+            cohen.d(d = zygoptera$Totalpresascorrigido, f = zygoptera$tratamento, na.rm = T)
             
             #Figura
             zygo_pres <-  model_line_semlog(zygoptera, zygoptera$biomassa_mg, (zygoptera$Totalpresascorrigido+1),
@@ -832,13 +890,13 @@
             #Notonectidae
             noto_pres_lme_int <- lmer(Totalpresascorrigido ~ log(biomassa_mg)*tratamento + 
                                         (1|bloco), data = notonectidae,
-                                      na.action = na.omit)
+                                      na.action = na.omit, REML = F)
             summary(noto_pres_lme_int)
             
             Anova(noto_pres_lme_int, type = "III") #inter nao signi
             
             noto_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + 
-                                    (1|bloco), data = notonectidae, na.action = na.omit)
+                                    (1|bloco), data = notonectidae, na.action = na.omit, REML = F)
             
             summary(noto_pres_lme)
             
@@ -848,14 +906,18 @@
             
             shapiro.test(resid(noto_pres_lme))
             
+            leveneTest(notonectidae$Totalpresascorrigido, center=mean, group = notonectidae$tratamento) #homocedasticidade
+            
             plot(sort(cooks.distance(noto_pres_lme)))
             
             notonectidae$Totalpresascorrigido[16] <- NA #outlier > 1.5
             notonectidae$Totalpresascorrigido[8] <- NA #não djanta, só tirando que normaliza
             
+            cohen.d(d = notonectidae$Totalpresascorrigido, f = notonectidae$tratamento, na.rm = T)
+            
             #modelo sem trat
             noto_pres_lme_notrat <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + 
-                                    (1|bloco), data = notonectidae, na.action = na.omit)
+                                    (1|bloco), data = notonectidae, na.action = na.omit, REML = F)
             Anova(noto_pres_lme_notrat)
             
             #Figura
@@ -881,7 +943,7 @@
 # Models of Growth rate ---------------------------------------------------
   #Belostomatidae
       belo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                 data = belostomatidae, na.action = na.omit)
+                                 data = belostomatidae, na.action = na.omit, REML = F)
       summary(belo_cresc_lme_int)
       
       Anova(belo_cresc_lme_int, "III")
@@ -891,13 +953,17 @@
       shapiro.test(resid(belo_cresc_lme_int)) #de bom tamanho já
       plot(sort(cooks.distance(belo_cresc_lme_int))) 
       
+      leveneTest(log(belostomatidae$taxacrescimento), center=mean, group = belostomatidae$tratamento) #homocedasticidade
+      
       belo_cresc_lme <- lmer(taxacrescimento ~ biomassa_mg + tratamento + (1|bloco),
-                             data = belostomatidae, na.action = na.omit)
+                             data = belostomatidae, na.action = na.omit, REML = F)
       summary(belo_cresc_lme)
       Anova(belo_cresc_lme)
       
       shapiro.test(resid(belo_cresc_lme))
       plot(sort(cooks.distance(belo_cresc_lme)))
+      
+      cohen.d(d = belostomatidae$taxacrescimento, f = belostomatidae$tratamento, na.rm = T)
       
       #Figure
       belo_cresc <-  model_line(belostomatidae, log10(belostomatidae$biomassa_mg), 
@@ -916,13 +982,13 @@
 
   #Anisoptera
         aniso_cresc_lme_int <- lmer(taxacrescimento ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                    data = anisoptera, na.action = na.omit)
+                                    data = anisoptera, na.action = na.omit, REML = F)
         summary(aniso_cresc_lme_int)
         
         Anova(aniso_cresc_lme_int, "III")
         
         aniso_cresc_lme <- lmer(log(taxacrescimento) ~ biomassa_mg + tratamento + (1|bloco),
-                                    data = anisoptera, na.action = na.omit)
+                                    data = anisoptera, na.action = na.omit, REML = F)
         summary(aniso_cresc_lme)
         Anova(aniso_cresc_lme)
         
@@ -930,14 +996,18 @@
         
         shapiro.test(resid(aniso_cresc_lme))
         
+        leveneTest(anisoptera$taxacrescimento, center=mean, group = anisoptera$tratamento) #homocedasticidade
+        
         plot(sort(cooks.distance(aniso_cresc_lme)))
 
         anisoptera$taxacrescimento[4] <- NA
         anisoptera$taxacrescimento[16] <- NA
         
+        cohen.d(d = anisoptera$taxacrescimento, f = anisoptera$tratamento, na.rm = T)
+        
         #modelo sem tratamento
           aniso_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ biomassa_mg + (1|bloco),
-                                         data = anisoptera, na.action = na.omit)
+                                         data = anisoptera, na.action = na.omit, REML = F)
           Anova(aniso_cresc_lme_notrat)
           
           shapiro.test(resid(aniso_cresc_lme_notrat))
@@ -966,13 +1036,13 @@
           
   #Zygoptera
       zygo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                 data = zygoptera, na.action = na.omit)
+                                 data = zygoptera, na.action = na.omit, REML = F)
       summary(zygo_cresc_lme_int)
       
       Anova(zygo_cresc_lme_int, "III")
       
       zygo_cresc_lme <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
-                                 data = zygoptera, na.action = na.omit)
+                                 data = zygoptera, na.action = na.omit, REML = F)
       summary(zygo_cresc_lme)
       Anova(zygo_cresc_lme)
       
@@ -982,14 +1052,18 @@
       
       shapiro.test(resid(zygo_cresc_lme))
       
+      leveneTest(zygoptera$taxacrescimento, center=mean, group = zygoptera$tratamento) #homocedasticidade
+      
       plot(sort(cooks.distance(zygo_cresc_lme)))
       
       zygoptera$taxacrescimento[24] <- NA #outlier > 0.8
       
+      cohen.d(d = zygoptera$taxacrescimento, f = zygoptera$tratamento, na.rm = T)
+      
       #modelo sem tratamento
       zygo_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ log(biomassa_mg) +
                                       (1|bloco),
-                             data = zygoptera, na.action = na.omit)
+                             data = zygoptera, na.action = na.omit, REML = F)
       Anova(zygo_cresc_lme_notrat)
       
       shapiro.test(resid(zygo_cresc_lme_notrat))
@@ -1024,7 +1098,7 @@
         
   #Notonectidae
       noto_cresc_lme_int <- lmer(taxacrescimento ~ log(biomassa_mg)*tratamento + (1|bloco),
-                                 data = zygoptera, na.action = na.omit)
+                                 data = zygoptera, na.action = na.omit, REML = F)
       summary(noto_cresc_lme_int)
       
       Anova(noto_cresc_lme_int, "III")
@@ -1040,11 +1114,15 @@
       plot(noto_cresc_lme)
       shapiro.test(resid(noto_cresc_lme))
       
+      leveneTest(notonectidae$taxacrescimento, center=mean, group = notonectidae$tratamento) #homocedasticidade
+      
       plot(sort(cooks.distance(noto_cresc_lme)))
+      
+      cohen.d(d = notonectidae$taxacrescimento, f = notonectidae$tratamento, na.rm = T)
       
       #modelo sem tratamento
       noto_cresc_lme_notrat <- lmer(taxacrescimento ~ log(biomassa_mg) + (1|bloco),
-                             data = zygoptera, na.action = na.omit)
+                             data = zygoptera, na.action = na.omit, REML = F)
       
       Anova(noto_cresc_lme_notrat)
       
