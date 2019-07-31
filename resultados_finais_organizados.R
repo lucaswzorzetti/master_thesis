@@ -77,6 +77,17 @@
                                                             size = 18,
                                                             margin = margin(r = 10)))
       biomassas_todos
+      
+      biomassas <- aov(log(biomassa_mg) ~ suborfam,
+                      data = geral, na.action = na.omit)
+      anova(biomassas)
+      summary(biomassas)
+      
+      shapiro.test(resid(biomassas)) #normalidade dos residuos
+      
+      leveneTest(geral$biomassa_mg, center=mean, group = geral$suborfam) #homogen variancias
+      
+      
         #saving
           jpeg(filename = "biomassas.jpg", width = 2350, height = 1900, 
                units = "px", pointsize = 12, quality = 100,
@@ -327,22 +338,6 @@
     
           
       #Tabela com os resultados da Anova
-          belo_temcap1_table
-          aniso_temcap1_lme_int_table
-          zygo_temcap1_lme_table
-          noto_temcap1_lme_table
-          
-          stargazer(belo_temcap1_table,
-                    aniso_temcap1_lme_int_table,
-                    zygo_temcap1_lme_table,
-                    noto_temcap1_lme_table,
-                    type = "text", summary = FALSE,
-                    title = c("Belostomatidae", "Anisoptera", "Zygoptera", "Notonectidae"))
-          
-          
-          
-          
-          pare
 
     
     
