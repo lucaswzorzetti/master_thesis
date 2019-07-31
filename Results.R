@@ -406,7 +406,7 @@
           scale_x_continuous(breaks = c(0.84, 1, 1.18,1.30), labels = c(7 ,10, 15, 20),
                              limits = c(0.8, 1.3)) +
           scale_y_continuous(breaks = c(1, 2, 3, 4), labels = c(10, 100, 1000, 10000),
-                             limits = c(0.8, 4.5))+
+                             limits = c(0.8, 4.5)) +
           annotation_logticks()
       noto_temcap1
       
@@ -420,10 +420,42 @@
       #Outliers
         notonectidae$tempocap1[13] <- NA # C.d >0.7
         
+        
   #Table of models
+        stargazer( belo_temcap1_lme_int, aniso_temcap1_lme_int,
+                   zygo_temcap1_lme_notrat, noto_temcap1_lme,
+                   align = TRUE,
+                   type = "text",
+                   title = "1° Capture Time Model results", ci = TRUE,
+                   ci.level = 0.95, model.numbers = FALSE,
+                   notes = "Confidence Interval of 95 percent",
+                   column.labels = c("Belostomatidae", "Anisoptera",
+                                     "Zygoptera", "Notonectidae"),
+                   covariate.labels = c("Log(Biomass)", "Treatment: Warmed",
+                                        "Log(Biomass) : Treatment",
+                                        "Constant"), 
+                   dep.var.labels = "1° Capture Time",
+                   add.lines = list(c("R² marginal",
+                                      round(r.squaredGLMM(belo_temcap1_lme_int)[1,1],
+                                            digits = 4),
+                                      round(r.squaredGLMM(aniso_temcap1_lme_int)[1,1],
+                                            digits = 4),
+                                      round(r.squaredGLMM(zygo_temcap1_lme_notrat)[1,1],
+                                            digits = 4),
+                                      round(r.squaredGLMM(noto_temcap1_lme)[1,1],
+                                            digits = 4)),
+                                    c("R² conditional",
+                                      round(r.squaredGLMM(belo_temcap1_lme_int)[1,2], 
+                                            digits = 4),
+                                      round(r.squaredGLMM(aniso_temcap1_lme_int)[1,2],
+                                            digits = 4),
+                                      round(r.squaredGLMM(zygo_temcap1_lme_notrat)[1,2],
+                                            digits = 4),
+                                      round(r.squaredGLMM(noto_temcap1_lme)[1,2],
+                                            digits = 4))))
 
-
           
           
           
           
+        
