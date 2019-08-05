@@ -453,9 +453,216 @@
                                             digits = 4),
                                       round(r.squaredGLMM(noto_temcap1_lme)[1,2],
                                             digits = 4))))
-
+        
+# Models of Difference between Capture Times ------------------------------
+  #Belostomatidae: All individuals captured only one prey
+        
+  #Notonectidae: Only 2 individuals captured more than one prey
+        
+  #Anisoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(anisoptera$dif_temp_cap, center=mean, group = anisoptera$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = anisoptera$dif_temp_cap, f = anisoptera$tratamento, na.rm = T)
+        
+    #Interaction model
+      aniso_diftemcap_lme_int <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                        data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_diftemcap_lme_int)
+        
+        Anova(aniso_diftemcap_lme_int, type = "III") #no inter
+        
+        shapiro.test(resid(aniso_diftemcap_lme_int))
+        
+        plot(sort(cooks.distance(aniso_diftemcap_lme_int)))
+        
+      #proportion (cap2/cap1)  
+        aniso_propcaps_lme_int <- lmer(log(tempocap2/tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                        data = anisoptera, na.action = na.omit, REML = F)
+          summary(aniso_propcaps_lme_int)
           
+          Anova(aniso_propcaps_lme_int, type = "III") #no inter
           
+          shapiro.test(resid(aniso_propcaps_lme_int))
           
+          plot(sort(cooks.distance(aniso_propcaps_lme_int)))
+        
+    #Simple model
+      aniso_diftemcap_lme <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                  data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_diftemcap_lme)
+        
+        Anova(aniso_diftemcap_lme)
+        
+        shapiro.test(resid(aniso_diftemcap_lme))
+        
+        plot(sort(cooks.distance(aniso_diftemcap_lme)))
+        
+          anisoptera$dif_temp_cap[16] <- NA #cookd > 1.9
+        
+        #proportion cap2/cap1
+          aniso_propcaps_lme <- lmer(log(tempocap2/tempocap1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                   data = anisoptera, na.action = na.omit, REML = F)
+            summary(aniso_propcaps_lme)
+            
+            Anova(aniso_propcaps_lme)
+            
+            shapiro.test(resid(aniso_propcaps_lme))
+            
+            plot(sort(cooks.distance(aniso_propcaps_lme)))
           
+    #Without Treatment
+      aniso_diftemcap_lme_notrat <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)+ (1|bloco),
+                                         data = anisoptera, na.action = na.omit, REML = F)  
+        summary(aniso_diftemcap_lme_notrat)
+        
+        Anova(aniso_diftemcap_lme_notrat)
+        
+        shapiro.test(resid(aniso_diftemcap_lme_notrat))
+        
+        plot(sort(cooks.distance(aniso_diftemcap_lme_notrat)))
+        
+        #proportion cap2/cap1
+          aniso_propcaps_lme_notrat <- lmer(log(tempocap2/tempocap1) ~ log(biomassa_mg) + (1|bloco),
+                                            data = anisoptera, na.action = na.omit, REML = F)
+            summary(aniso_propcaps_lme_notrat)
+            
+            Anova(aniso_propcaps_lme_notrat)
+            
+            shapiro.test(resid(aniso_propcaps_lme_notrat))
+            
+            plot(sort(cooks.distance(aniso_propcaps_lme_notrat)))
+            
+    #Model selection
+      #Veryfying interaction
+        anova(aniso_diftemcap_lme_int, aniso_diftemcap_lme)
+            
+      # R2m
+        r.squaredGLMM(aniso_diftemcap_lme_int)
+        r.squaredGLMM(aniso_diftemcap_lme)
+        r.squaredGLMM(aniso_diftemcap_lme_notrat)
+        
+      #aictab
+        aictab(c(aniso_diftemcap_lme, aniso_diftemcap_lme_int, aniso_diftemcap_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+      aniso_diftemcap <- model_line_1line(anisoptera, log10(anisoptera$biomassa_mg),
+                                            log10neg(anisoptera$dif_temp_cap), 
+                                            "Difference of Capture Times [s]\n log10 scale",
+                                            noto_temcap1_lme, "Anisoptera")+
+          scale_x_continuous(breaks = c(1, 1.48, 1.7, 2),
+                             labels = c(10, 30, 50, 100), limits = c(0.9, 2.17)) +
+          scale_y_continuous(breaks = c(-3.3, -2, -1, 0, 1, 2, 3, 4),
+                             labels = c(-2000, -100, -10, 0, 10, 100, 1000, 10000))+
+          geom_hline(yintercept = 0, linetype =3)+
+          annotation_logticks()
+        aniso_diftemcap
+        
+      #saving
+        jpeg(filename = "diftemcap_aniso.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        aniso_diftemcap
+        dev.off()
+        
+        
+  #Zygoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(zygoptera$dif_temp_cap, center=mean, group = zygoptera$tratamento) 
+        
+      #Effect size for Treatment
+        cohen.d(d = zygoptera$dif_temp_cap, f = zygoptera$tratamento, na.rm = T)
+        
+    #Interaction model
+      zygo_diftemcap_lme_int <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                        data = zygoptera, na.action = na.omit, REML = F) 
+        summary(zygo_diftemcap_lme_int)
+        
+        Anova(zygo_diftemcap_lme_int)
+        
+        shapiro.test(resid(zygo_diftemcap_lme_int))
+        
+        plot(sort(cooks.distance(zygo_diftemcap_lme_int)))
+        
+        #Proportion cap2/cap1
+        zygo_propcaps_lme_int <- lmer(log(tempocap2/tempocap1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                      data = zygoptera, na.action = na.omit, REML = F)
+          summary(zygo_propcaps_lme_int)
+          
+          Anova(zygo_propcaps_lme_int, type = "III")
+          
+          shapiro.test(resid(zygo_propcaps_lme_int))
+          
+          plot(sort(cooks.distance(zygo_propcaps_lme_int)))
+        
+        
+    #Simple model
+      zygo_diftemcap_lme <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_diftemcap_lme)
+        
+        Anova(zygo_diftemcap_lme)
+        
+        shapiro.test(resid(zygo_diftemcap_lme))
+        
+        plot(sort(cooks.distance(zygo_diftemcap_lme)))
+          
+        #proportion tempocap2/tempocap1
+          zygo_propcaps_lme <- lmer(log(tempocap2/tempocap1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                    data = zygoptera, na.action = na.omit, REML = F)
+            summary(zygo_propcaps_lme)
+            
+            Anova(zygo_propcaps_lme)
+            
+            shapiro.test(resid(zygo_propcaps_lme))
+            
+            plot(sort(cooks.distance(zygo_propcaps_lme)))
+          
+    #Without Treatment
+      zygo_diftemcap_lme_notrat <- lmer(logneg(dif_temp_cap) ~ log(biomassa_mg) + (1|bloco),
+                                        data = zygoptera, na.action = na.omit, REML = F) 
+        summary(zygo_diftemcap_lme_notrat)
+        
+        Anova(zygo_diftemcap_lme_notrat)
+        
+        shapiro.test(resid(zygo_diftemcap_lme_notrat))
+        
+        plot(sort(cooks.distance(zygo_diftemcap_lme_notrat)))
+            
+    #Model selection
+      #Veryfying interaction
+        anova(zygo_diftemcap_lme_int, zygo_diftemcap_lme)
+        
+      # R2m
+        r.squaredGLMM(zygo_diftemcap_lme_int)
+        r.squaredGLMM(zygo_diftemcap_lme)
+        r.squaredGLMM(zygo_diftemcap_lme_notrat) 
+        
+      #aictab
+        aictab(c(zygo_diftemcap_lme, zygo_diftemcap_lme_int, zygo_diftemcap_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+        zygo_diftemcap <- model_line_noline(zygoptera, log10(zygoptera$biomassa_mg),
+                                            log10neg(zygoptera$dif_temp_cap), 
+                                            "Difference of Capture Times [s]\n log10 scale",
+                                            noto_temcap1_lme, "Zygoptera")+
+          scale_x_continuous(breaks = c(1, 1.3, 1.48),
+                             labels = c(10, 20, 30)) +
+          scale_y_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3, 4),
+                             labels = c(-1000, -100, -10, 0, 10, 100, 1000, 10000))+
+          geom_hline(yintercept = 0, linetype = 3)+
+          annotation_logticks()
+        zygo_diftemcap 
+        
+        #saving
+          jpeg(filename = "diftemcap_zygo.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          zygo_diftemcap
+          dev.off()
         
