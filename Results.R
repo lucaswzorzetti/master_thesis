@@ -666,3 +666,235 @@
           zygo_diftemcap
           dev.off()
         
+
+          
+# Models of Handling Time -------------------------------------------------
+  #Belostomatidae: no measures
+          
+  #Anisoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(anisoptera$tempomanip1, center=mean, group = anisoptera$tratamento) 
+          
+      #Effect size for Treatment
+        cohen.d(d = anisoptera$tempomanip1, f = anisoptera$tratamento, na.rm = T)
+          
+    #Interaction model
+      aniso_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                   data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_temp_lme_int)  #no interaction
+        
+        Anova(aniso_temp_lme_int, type = "III")
+        
+        shapiro.test(resid(aniso_temp_lme_int))
+        
+        plot(sort(cooks.distance(aniso_temp_lme_int)))
+        
+    #Simple model
+      aniso_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                               data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_temp_lme)
+        
+        Anova(aniso_temp_lme, type = "II")
+        
+        shapiro.test(resid(aniso_temp_lme))
+        
+        plot(sort(cooks.distance(aniso_temp_lme)))
+        
+    #Without Treatment
+      aniso_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
+                               data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_temp_lme_notrat)
+        
+        Anova(aniso_temp_lme_notrat, type = "II")
+        
+        shapiro.test(resid(aniso_temp_lme_notrat))
+        
+        plot(sort(cooks.distance(aniso_temp_lme_notrat)))
+        
+    #Model selection
+      #Veryfying interaction
+        anova(aniso_temp_lme_int, aniso_temp_lme)
+        
+      # R2m
+        r.squaredGLMM(aniso_temp_lme_int)
+        r.squaredGLMM(aniso_temp_lme)
+        r.squaredGLMM(aniso_temp_lme_notrat)
+        
+      #aictab
+        aictab(c(aniso_temp_lme, aniso_temp_lme_int, aniso_temp_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+        aniso_temp <- model_line_1line(anisoptera, log10(anisoptera$biomassa_mg),
+                                       log10(anisoptera$tempomanip1), 
+                                       "Handling Time [s]\n log10 scale",
+                                       noto_temcap1_lme, "Anisoptera")+
+          scale_x_continuous(breaks = c(1, 1.3, 1.48, 1.6, 1.7, 2),
+                             labels = c(10, 20, 30, 40, 50, 100), limits = c(0.9, 2.17)) +
+          scale_y_continuous(breaks = c(0.7, 1, 1.7, 2),
+                             labels = c(5, 10, 50, 100))+
+          geom_hline(yintercept = 0, linetype =3)+
+          annotation_logticks()
+        aniso_temp
+        
+        #saving
+          jpeg(filename = "temp_aniso.jpg", width = 2350, height = 1900, 
+               units = "px", pointsize = 12, quality = 100,
+               bg = "white",  res = 300)
+          aniso_temp
+          dev.off()  
+          
+  #Zygoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(zygoptera$tempomanip1, center=mean, group = zygoptera$tratamento)
+          
+      #Effect size for Treatment
+        cohen.d(d = zygoptera$tempomanip1, f = zygoptera$tratamento, na.rm = T)
+          
+    #Interaction model
+      zygo_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                  data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_temp_lme_int) 
+        
+        Anova(zygo_temp_lme_int, type = "III") #no inter
+        
+        shapiro.test(resid(zygo_temp_lme_int))
+        
+        plot(sort(cooks.distance(zygo_temp_lme_int)))
+          
+    #Simple model
+      zygo_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                  data = zygoptera, na.action = na.omit, REML = F) 
+        summary(zygo_temp_lme)
+        
+        Anova(zygo_temp_lme, type = "II")
+        
+        shapiro.test(resid(zygo_temp_lme))
+        
+        plot(sort(cooks.distance(zygo_temp_lme)))
+        
+    #Without Treatment
+      zygo_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
+                                   data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_temp_lme_notrat)
+        
+        Anova(zygo_temp_lme_notrat, type = "II")
+        
+        shapiro.test(resid(zygo_temp_lme_notrat))
+        
+        plot(sort(cooks.distance(zygo_temp_lme_notrat)))
+      
+    #Model selection
+      #Veryfying interaction
+        anova(zygo_temp_lme_int, zygo_temp_lme)
+        
+      # R2m
+        r.squaredGLMM(zygo_temp_lme_int)
+        r.squaredGLMM(zygo_temp_lme)
+        r.squaredGLMM(zygo_temp_lme_notrat)
+          
+      #aictab
+        aictab(c(zygo_temp_lme, zygo_temp_lme_int, zygo_temp_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+          
+    #Figure
+      zygo_temp <- model_line_1line(zygoptera, log10(zygoptera$biomassa_mg),
+                                      log10(zygoptera$tempomanip1), 
+                                      "Handling Time [s]\n log10 scale",
+                                      noto_temcap1_lme, "Zygoptera")+
+          scale_x_continuous(breaks = c(0.7, 1, 1.3, 1.48),
+                             labels = c(5, 10, 20, 30)) +
+          scale_y_continuous(breaks = c(0.7, 1, 1.3, 1.7, 2),
+                             labels = c(5, 10, 20, 50, 100))+
+          annotation_logticks()
+       zygo_temp
+        
+      #saving
+        jpeg(filename = "temp_zygo.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        zygo_temp
+        dev.off()  
+        
+        
+  #Notonectidae
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(notonectidae$tempomanip1, center=mean, group = notonectidae$tratamento) 
+        
+      #Effect size for Treatment
+        cohen.d(d = notonectidae$tempomanip1, f = notonectidae$tratamento, na.rm = T)
+        
+    #Interaction model
+      noto_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                  data = notonectidae, na.action = na.omit, REML = F)
+        summary(noto_temp_lme_int)
+        
+        Anova(noto_temp_lme_int, type = "III")#no inter
+        
+        shapiro.test(resid(noto_temp_lme_int))
+        
+        plot(sort(cooks.distance(noto_temp_lme_int)))
+        
+    #Simple model
+      noto_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                              data = notonectidae,na.action = na.omit, REML = F)
+        
+        summary(noto_temp_lme)
+        
+        Anova(noto_temp_lme)
+        
+        shapiro.test(resid(noto_temp_lme))
+        
+        plot(sort(cooks.distance(noto_temp_lme)))
+        
+    #Without Treatment
+      noto_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
+                              data = notonectidae,na.action = na.omit, REML = F)
+      
+        summary(noto_temp_lme_notrat)
+        
+        Anova(noto_temp_lme_notrat)
+        
+        shapiro.test(resid(noto_temp_lme_notrat))
+        
+        plot(sort(cooks.distance(noto_temp_lme_notrat)))
+        
+        notonectidae$tempomanip1[14] <- NA #cook d > 1.3
+        notonectidae$tempomanip1[29] <- NA
+        
+    #Model selection
+      #Veryfying interaction
+        anova(noto_temp_lme_int, noto_temp_lme)
+        
+      # R2m
+        r.squaredGLMM(noto_temp_lme_int)  
+        r.squaredGLMM(noto_temp_lme) 
+        r.squaredGLMM(noto_temp_lme_notrat) 
+        
+      #aictab
+        aictab(c(noto_temp_lme, noto_temp_lme_int, noto_temp_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+      noto_temp <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
+                                       log10(notonectidae$tempomanip1), 
+                                       "Handling Time [s]\n log10 scale",
+                                       noto_temcap1_lme, "Notonectidae")+
+          scale_x_continuous(breaks = c(0.7, 1, 1.18, 1.4),
+                             labels = c(5, 10, 15,  25), limits = c(0.7, 1.4)) +
+          scale_y_continuous(breaks = c(2.48, 2.7, 3, 3.3, 3.7, 4),
+                             labels = c(300, 500, 1000, 2000, 5000, 10000))+
+          annotation_logticks()
+      noto_temp
+        
+      #saving
+        jpeg(filename = "temp_noto.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        noto_temp
+        dev.off() 
+        
+           
