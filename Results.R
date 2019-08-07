@@ -898,3 +898,602 @@
         dev.off() 
         
            
+        
+# Models of Total Consumption ----------------------------------------------
+  #Belostomatidae
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(log10(belostomatidae$Totalpresascorrigido+1), center=mean, group = belostomatidae$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = belostomatidae$Totalpresascorrigido, f = belostomatidae$tratamento, na.rm = T)
+        
+    #Interaction model
+      belo_pres_lme_int <- lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg)*tratamento +
+                                    (1|bloco), data = belostomatidae, na.action = na.omit, REML = F)
+        summary(belo_pres_lme_int) 
+        
+        Anova(belo_pres_lme_int, type = "III")
+        
+        shapiro.test(resid(belo_pres_lme_int))
+        
+        plot(sort(cooks.distance(belo_pres_lme_int)))
+        
+    #Simple model
+      belo_pres_lme <-  lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg) + tratamento + 
+                                 (1|bloco), data = belostomatidae, na.action = na.omit, REML = F) 
+        summary(belo_pres_lme)
+        
+        Anova(belo_pres_lme) 
+        
+        shapiro.test(resid(belo_pres_lme))
+        
+        plot(sort(cooks.distance(belo_pres_lme)))
+        
+        #belostomatidae$Totalpresascorrigido[16] <- NA #cook d > 0.56, if would need to remove
+        
+    #Without Treatment
+      belo_pres_lme_notrat <- lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg)+ 
+                                     (1|bloco), data = belostomatidae, na.action = na.omit, REML = F)
+        summary(belo_pres_lme_notrat)
+        
+        Anova(belo_pres_lme_notrat)
+        
+        shapiro.test(resid(belo_pres_lme_notrat))
+        
+        plot(sort(cooks.distance(belo_pres_lme_notrat)))
+      
+    #Model selection
+      #Veryfying interaction
+        anova(belo_pres_lme_int, belo_pres_lme)
+        
+      # R2m
+        r.squaredGLMM(belo_pres_lme_int)
+        r.squaredGLMM(belo_pres_lme)
+        r.squaredGLMM(belo_pres_lme_notrat)
+        
+      #aictab
+        aictab(c(belo_pres_lme, belo_pres_lme_int, belo_pres_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+      belo_pres <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg),
+                                belostomatidae$Totalpresascorrigido,
+                                "N° prey consumed/day", belo_pres_lme_int, "Belostomatidae")+
+          theme(legend.position = c(0.8, 0.8)) + geom_hline(yintercept = 0, linetype = 3)+
+          scale_x_continuous(breaks = c(1, 1.301, 1.7, 2, 2.477),
+                             labels = c(10, 20, 50, 100, 300))+ annotation_logticks()
+      belo_pres
+      
+      #saving  
+        jpeg(filename = "pres_belo.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        belo_pres
+        dev.off()
+       
+        
+  #Anisoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(anisoptera$Totalpresascorrigido, center=mean, group = anisoptera$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = anisoptera$Totalpresascorrigido, f = anisoptera$tratamento, na.rm = T)
+        
+    #Interaction model
+      aniso_pres_lme_int <- lmer(log(Totalpresascorrigido) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                   data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_pres_lme_int)
+        
+        Anova(aniso_pres_lme_int, type = "III")
+        
+        shapiro.test(resid(aniso_pres_lme_int))
+        
+        plot(sort(cooks.distance(aniso_pres_lme_int)))
+        
+    #Simple model
+      aniso_pres_lme <- lmer(log(Totalpresascorrigido) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                               data = anisoptera, na.action = na.omit, REML = F)
+        
+        summary(aniso_pres_lme)
+        
+        Anova(aniso_pres_lme) 
+        
+        shapiro.test(resid(aniso_pres_lme))
+        
+        plot(sort(cooks.distance(aniso_pres_lme)))
+        
+        anisoptera$Totalpresascorrigido[28] <- NA #cook d >0.8
+        anisoptera$Totalpresascorrigido[30] <- NA #cook d > 0.7
+        
+    #Without Treatment
+      aniso_pres_lme_notrat <- lmer(log(Totalpresascorrigido) ~ log(biomassa_mg) + (1|bloco),
+                               data = anisoptera, na.action = na.omit, REML = F)  
+        summary(aniso_pres_lme_notrat)
+        
+        Anova(aniso_pres_lme_notrat)
+        
+        shapiro.test(resid(aniso_pres_lme_notrat))
+        
+        plot(sort(cooks.distance(aniso_pres_lme_notrat)))
+      
+    #Model selection
+      #Veryfying interaction
+        anova(aniso_pres_lme_int, aniso_pres_lme)
+        
+      # R2m
+       r.squaredGLMM(aniso_pres_lme_int) 
+       r.squaredGLMM(aniso_pres_lme)
+       r.squaredGLMM(aniso_pres_lme_notrat)
+        
+      #aictab
+        aictab(c(aniso_pres_lme, aniso_pres_lme_int, aniso_pres_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+      aniso_pres <- model_line(anisoptera, log10(anisoptera$biomassa_mg), (anisoptera$Totalpresascorrigido),
+                                 "N° prey consumed/day",
+                                 aniso_pres_lme_int, "Anisoptera") + annotation_logticks()+
+          scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.698, 2),
+                             labels = c(5, 10, 20, 50, 100))
+        aniso_pres 
+        
+      #saving
+        jpeg(filename = "pres_aniso.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        aniso_pres
+        dev.off()
+       
+       
+  #Zygoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(zygoptera$Totalpresascorrigido, center=mean, group = zygoptera$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = zygoptera$Totalpresascorrigido, f = zygoptera$tratamento, na.rm = T)
+        
+    #Interaction model
+      zygo_pres_lme_int <- lmer(Totalpresascorrigido ~ biomassa_mg*tratamento + (1|bloco),
+                                  data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_pres_lme_int)
+        
+        Anova(zygo_pres_lme_int, type = "III") 
+        
+        shapiro.test(resid(zygo_pres_lme_int))
+        
+        plot(sort(cooks.distance(zygo_pres_lme_int)))
+        
+    #Simple model
+      zygo_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + (1|bloco),
+                              data = zygoptera, na.action = na.omit, REML = F)
+        
+        summary(zygo_pres_lme)
+        
+        Anova(zygo_pres_lme, type = "II")
+        
+        shapiro.test(resid(zygo_pres_lme))
+        
+        plot(sort(cooks.distance(zygo_pres_lme)))
+        
+    #Without Treatment
+      zygo_pres_lme_notrat <- lmer(Totalpresascorrigido ~ log(biomassa_mg)+ (1|bloco),
+                              data = zygoptera, na.action = na.omit, REML = F)
+        
+        summary(zygo_pres_lme_notrat)
+        
+        Anova(zygo_pres_lme_notrat, type = "II")
+        
+        shapiro.test(resid(zygo_pres_lme_notrat))
+        
+        plot(sort(cooks.distance(zygo_pres_lme_notrat)))  
+        
+    #Model selection
+      #Veryfying interaction
+        anova(zygo_pres_lme_int, zygo_pres_lme)
+        
+      # R2m
+        r.squaredGLMM(zygo_pres_lme_int)
+        r.squaredGLMM(zygo_pres_lme)
+        r.squaredGLMM(zygo_pres_lme_notrat)
+        
+      #aictab
+       aictab(c(zygo_pres_lme, zygo_pres_lme_int, zygo_pres_lme_notrat),
+              c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)")) 
+        
+    #Figure
+      zygo_pres <-  model_line_semlog(zygoptera, zygoptera$biomassa_mg, (zygoptera$Totalpresascorrigido+1),
+                                       "N° prey consumed/day", zygo_pres_lme,
+                                       "Zygoptera")
+      zygo_pres
+      
+      #saving 
+       jpeg(filename = "pres_zygo.jpg", width = 2350, height = 1900, 
+            units = "px", pointsize = 12, quality = 100,
+            bg = "white",  res = 300)
+       zygo_pres
+       dev.off()
+        
+  #Notonectidae
+    #Previous tests
+      #Levene Test for homocedasticity
+       leveneTest(notonectidae$Totalpresascorrigido, center=mean, group = notonectidae$tratamento)
+       
+      #Effect size for Treatment
+       cohen.d(d = notonectidae$Totalpresascorrigido, f = notonectidae$tratamento, na.rm = T)
+       
+    #Interaction model
+      noto_pres_lme_int <- lmer(Totalpresascorrigido ~ log(biomassa_mg)*tratamento + 
+                                   (1|bloco), data = notonectidae,
+                                 na.action = na.omit, REML = F)
+        summary(noto_pres_lme_int)
+       
+        Anova(noto_pres_lme_int, type = "III") 
+        
+        shapiro.test(resid(noto_pres_lme_int))
+        
+        plot(sort(cooks.distance(noto_pres_lme_int)))
+        
+    #Simple model
+      noto_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + 
+                                (1|bloco), data = notonectidae, na.action = na.omit, REML = F)
+        
+        summary(noto_pres_lme)
+        
+        Anova(noto_pres_lme, type = "II")
+        
+        shapiro.test(resid(noto_pres_lme))
+        
+        plot(sort(cooks.distance(noto_pres_lme)))
+        
+        notonectidae$Totalpresascorrigido[16] <- NA #cook d > 0.74
+        #notonectidae$Totalpresascorrigido[8] <- NA #only without it normalizes
+       
+    #Without Treatment
+      noto_pres_lme_notrat <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + 
+                                (1|bloco), data = notonectidae, na.action = na.omit, REML = F)
+        summary(noto_pres_lme_notrat)
+        
+        Anova(noto_pres_lme_notrat)
+        
+        shapiro.test(resid(noto_pres_lme_notrat))
+        
+        plot(sort(cooks.distance(noto_pres_lme_notrat)))
+       
+    #Model selection
+      #Veryfying interaction
+        anova(noto_pres_lme_int, noto_pres_lme)
+       
+      # R2m
+        r.squaredGLMM(noto_pres_lme_int)
+        r.squaredGLMM(noto_pres_lme)
+        r.squaredGLMM(noto_pres_lme_notrat)
+       
+      #aictab
+        aictab(c(noto_pres_lme, noto_pres_lme_int, noto_pres_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+       
+    #Figure
+      noto_pres <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
+                                       notonectidae$Totalpresascorrigido,
+                                       "N° prey consumed/day", noto_pres_lme, "Notonectidae")+
+          scale_x_continuous(breaks = c(0.845, 1, 1.176, 1.301),
+                             labels = c(7, 10, 15, 20), limits = c(0.8,1.35)) +
+          scale_y_continuous(breaks = c(0.8, 1, 1.25, 1.5, 1.75, 2),
+                             labels = c(0.8, 1, 1.25, 1.5, 1.75, 2))
+      noto_pres
+      
+      #saving  
+        jpeg(filename = "pres_noto.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        noto_pres
+        dev.off() 
+ 
+        
+        
+               
+# Models of Growth rate ---------------------------------------------------
+  #Belostomatidae
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(log(belostomatidae$taxacrescimento), center=mean, group = belostomatidae$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = belostomatidae$taxacrescimento, f = belostomatidae$tratamento, na.rm = T)
+        
+    #Interaction model
+      belo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                   data = belostomatidae, na.action = na.omit, REML = F)
+        summary(belo_cresc_lme_int)
+        
+        Anova(belo_cresc_lme_int, "III") 
+        
+        shapiro.test(resid(belo_cresc_lme_int)) 
+        
+        plot(sort(cooks.distance(belo_cresc_lme_int))) 
+        
+        #belostomatidae$taxacrescimento[17] <- NA #cook d > 0.58 #even in this way, not normalized
+        
+    #Simple model
+      belo_cresc_lme <- lmer(log(taxacrescimento) ~ biomassa_mg + tratamento + (1|bloco),
+                               data = belostomatidae, na.action = na.omit, REML = F)
+        summary(belo_cresc_lme)
+        
+        Anova(belo_cresc_lme)
+        
+        shapiro.test(resid(belo_cresc_lme))
+        
+        plot(sort(cooks.distance(belo_cresc_lme)))
+        
+    #Without Treatment
+      belo_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ biomassa_mg + (1|bloco),
+                               data = belostomatidae, na.action = na.omit, REML = F)
+        summary(belo_cresc_lme_notrat)
+        
+        Anova(belo_cresc_lme_notrat)
+        
+        shapiro.test(resid(belo_cresc_lme_notrat))
+        
+        plot(sort(cooks.distance(belo_cresc_lme_notrat)))
+        
+    #Model selection
+      #Veryfying interaction
+        anova(belo_cresc_lme_int, belo_cresc_lme)
+        
+      # R2m
+        r.squaredGLMM(belo_cresc_lme_int) 
+        
+      #aictab
+        aictab(c(belo_cresc_lme, belo_cresc_lme_int, belo_cresc_lme_notrat),
+                      c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+        
+    #Figure
+      belo_cresc <-  model_line(belostomatidae, log10(belostomatidae$biomassa_mg), 
+                                  log10(belostomatidae$taxacrescimento),
+                                  ynome = "Growth rate, log10 scale", 
+                                  model = belo_cresc_lme_int,
+                                  title = "Belostomatidae") + annotation_logticks() +
+          geom_hline(yintercept = 0, linetype = 3)
+      belo_cresc
+        
+      #saving     
+      jpeg(filename = "growth_belos.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      belo_cresc
+      dev.off() 
+        
+ 
+  #Anisoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(anisoptera$taxacrescimento, center=mean, group = anisoptera$tratamento)
+      
+      #Effect size for Treatment
+        cohen.d(d = anisoptera$taxacrescimento, f = anisoptera$tratamento, na.rm = T)
+      
+    #Interaction model
+      aniso_cresc_lme_int <- lmer((taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                    data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_cresc_lme_int)
+        
+        Anova(aniso_cresc_lme_int, "III")
+        
+        shapiro.test(resid(aniso_cresc_lme_int))
+        
+        plot(sort(cooks.distance(aniso_cresc_lme_int)))
+        
+    #Simple model
+      aniso_cresc_lme <- lmer((taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                                data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_cresc_lme)
+        
+        Anova(aniso_cresc_lme)
+        
+        shapiro.test(resid(aniso_cresc_lme))
+        
+        plot(sort(cooks.distance(aniso_cresc_lme)))
+        
+        anisoptera$taxacrescimento[4] <- NA #
+        anisoptera$taxacrescimento[16] <- NA # cook d > 1.15
+      
+    #Without Treatment
+      aniso_cresc_lme_notrat <- lmer((taxacrescimento) ~ biomassa_mg + (1|bloco),
+                                       data = anisoptera, na.action = na.omit, REML = F)
+        summary(aniso_cresc_lme_notrat)
+      
+        Anova(aniso_cresc_lme_notrat)
+        
+        shapiro.test(resid(aniso_cresc_lme_notrat))
+        
+        plot(sort(cooks.distance(aniso_cresc_lme_notrat)))
+      
+    #Model selection
+      #Veryfying interaction
+        anova(aniso_cresc_lme_int, aniso_cresc_lme)
+      
+      # R2m
+        r.squaredGLMM(aniso_cresc_lme_int)
+        r.squaredGLMM(aniso_cresc_lme)
+        r.squaredGLMM(aniso_cresc_lme_notrat)
+        
+      #aictab
+        aictab(c(aniso_cresc_lme, aniso_cresc_lme_int, aniso_cresc_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+      
+    #Figure
+      aniso_cresc <-  model_line_semlog_1line(anisoptera, anisoptera$biomassa_mg, 
+                                                log10(anisoptera$taxacrescimento),
+                                                ynome = "Growth rate [proportion] \n log10 scale", 
+                                                model = belo_cresc_lme_int,
+                                                title = "Anisoptera")+
+          scale_y_continuous(breaks = c(-0.0044, 0, 0.0043, 0.0086, 0.0128, 0.017, 0.0212, 0.0253),
+                             labels = c(0.99, 1, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06)) +
+          geom_hline(yintercept = 0, linetype = 3)
+      aniso_cresc 
+        
+      #saving
+      jpeg(filename = "growth_aniso.jpg", width = 2350, height = 1900, 
+           units = "px", pointsize = 12, quality = 100,
+           bg = "white",  res = 300)
+      aniso_cresc
+      dev.off()
+        
+
+  #Zygoptera
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(zygoptera$taxacrescimento, center=mean, group = zygoptera$tratamento)
+      
+      #Effect size for Treatment
+        cohen.d(d = zygoptera$taxacrescimento, f = zygoptera$tratamento, na.rm = T)
+      
+    #Interaction model
+      zygo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                 data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_cresc_lme_int)
+        
+        Anova(zygo_cresc_lme_int, "III")
+        
+        shapiro.test(resid(zygo_cresc_lme_int))
+
+        plot(sort(cooks.distance(zygo_cresc_lme_int)))
+      
+    #Simple model
+      zygo_cresc_lme <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + tratamento + (1|bloco),
+                               data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_cresc_lme)
+        
+        Anova(zygo_cresc_lme)
+        
+        shapiro.test(resid(zygo_cresc_lme))
+
+        plot(sort(cooks.distance(zygo_cresc_lme)))
+        
+    #Without Treatment
+      zygo_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ log(biomassa_mg) + (1|bloco),
+                               data = zygoptera, na.action = na.omit, REML = F)
+        summary(zygo_cresc_lme_notrat)
+        
+        Anova(zygo_cresc_lme_notrat)
+        
+        shapiro.test(resid(zygo_cresc_lme_notrat))
+        
+        plot(sort(cooks.distance(zygo_cresc_lme_notrat)))
+        
+        zygoptera$taxacrescimento[24] <- NA #cook d > 0.84
+    
+    #Model selection
+      #Veryfying interaction
+        anova(zygo_cresc_lme_int, zygo_cresc_lme)
+      
+      # R2m
+        r.squaredGLMM(zygo_cresc_lme_int)
+        r.squaredGLMM(zygo_cresc_lme)
+        r.squaredGLMM(zygo_cresc_lme_notrat)
+      
+      #aictab
+        aictab(c(zygo_cresc_lme, zygo_cresc_lme_int, zygo_cresc_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
+      
+    #Figure
+      zygo_cresc <-  model_line_1line(zygoptera, log10(zygoptera$biomassa_mg), 
+                                        log10(zygoptera$taxacrescimento),
+                                        ynome = "Growth rate [proportion] \n log10 scale", 
+                                        model = zygo_cresc_lme,
+                                        title = "Zygoptera")+
+          scale_x_continuous(breaks = c(0.778, 1, 1.301, 1.477),
+                             labels = c(6, 10, 20, 30))+
+          scale_y_continuous(breaks = c(-0.0223,-0.0088, 0, 0.0086, 0.0212, 0.0334, 0.0414),
+                             labels = c(0.95, 0.98, 1, 1.02, 1.05, 1.08, 1.10)) +
+          annotation_logticks()+
+          geom_hline(yintercept = 0, linetype = 3)
+      zygo_cresc     
+        
+      #saving
+        jpeg(filename = "growth_zygo.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        zygo_cresc
+        dev.off()
+        
+      
+  #Notonectidae
+    #Previous tests
+      #Levene Test for homocedasticity
+        leveneTest(notonectidae$taxacrescimento, center=mean, group = notonectidae$tratamento)
+        
+      #Effect size for Treatment
+        cohen.d(d = notonectidae$taxacrescimento, f = notonectidae$tratamento, na.rm = T)
+        
+    #Interaction model
+      noto_cresc_lme_int <- lmer(taxacrescimento ~ log(biomassa_mg)*tratamento + (1|bloco),
+                                   data = zygoptera, na.action = na.omit, REML = F)
+        summary(noto_cresc_lme_int)
+        
+        Anova(noto_cresc_lme_int, "III")
+        
+        shapiro.test(resid(noto_cresc_lme_int))
+        
+        plot(sort(cooks.distance(noto_cresc_lme_int)))
+        
+    #Simple model
+      noto_cresc_lme <- lmer(taxacrescimento ~ log(biomassa_mg) + tratamento + (1|bloco),
+                               data = zygoptera, na.action = na.omit, REML = F)
+        
+        summary(noto_cresc_lme)
+        
+        Anova(noto_cresc_lme)
+        
+        shapiro.test(resid(noto_cresc_lme))
+        
+        plot(sort(cooks.distance(noto_cresc_lme)))
+        
+    #Without Treatment
+      noto_cresc_lme_notrat <- lmer(taxacrescimento ~ log(biomassa_mg) + (1|bloco),
+                                      data = zygoptera, na.action = na.omit, REML = F)
+        summary(noto_cresc_lme_notrat)
+        
+        Anova(noto_cresc_lme_notrat)
+        
+        shapiro.test(resid(noto_cresc_lme_notrat))
+        
+        plot(sort(cooks.distance(noto_cresc_lme_notrat)))
+        
+    #Model selection
+      #Veryfying interaction
+        anova(noto_cresc_lme_int, noto_cresc_lme)
+        
+      # R2m
+        r.squaredGLMM(noto_cresc_lme_int)
+        r.squaredGLMM(noto_cresc_lme)
+        r.squaredGLMM(noto_cresc_lme_notrat)
+        
+      #aictab
+        aictab(c(noto_cresc_lme, noto_cresc_lme_int, noto_cresc_lme_notrat),
+               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))  
+        
+    #Figure
+      noto_cresc <-  model_line_1line(notonectidae, log10(notonectidae$biomassa_mg), 
+                                        (notonectidae$taxacrescimento),
+                                        ynome = "Growth rate [proportion]", 
+                                        model = noto_cresc_lme,
+                                        title = "Notonectidae")+
+          scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.477, 1.602),
+                             labels = c(5, 10, 20, 30, 40))+
+          scale_y_continuous() +
+          annotation_logticks()
+      noto_cresc 
+        
+      #saving
+        jpeg(filename = "growth_noto.jpg", width = 2350, height = 1900, 
+             units = "px", pointsize = 12, quality = 100,
+             bg = "white",  res = 300)
+        noto_cresc
+        dev.off()   
+        
+
+        
