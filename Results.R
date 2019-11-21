@@ -60,17 +60,20 @@
 
 # Comparing biomasses between Taxa ----------------------------------------
   #Biomass
-    biomass_all <- geral %>% ggplot(aes(x = suborfam, y = biomassa_mg, fill = suborfam))+
+    biomass_all <- geral %>% ggplot(aes(x = suborfam, y = log10(biomassa_mg), fill = suborfam))+
             geom_point(size = 5, alpha = 0.5, shape = 21)+
             scale_x_discrete(limits = c("Belostomatidae", "Anisoptera",
                                         "Zygoptera", "Notonectidae")) +
-            xlab("Taxa") + ylab(expression(paste("Biomass [mg]")))+
+            xlab("Taxa") + ylab("Biomass [mg]\nlog10 scale")+
+            scale_y_continuous(breaks = c(0.69897, 1, 1.3979, 1.6989, 2, 2.3010, 2.544),
+                               labels = c(5, 10, 25, 50, 100, 200, 350))+
             theme_classic() + theme(legend.position = "none",
-                                    axis.text = element_text(face = "bold",
-                                                             size = 12, colour = "black"),
+                                    axis.text.x = element_text(face = "bold",
+                                                             size = 16, colour = "black"),
+                                    axis.text.y = element_text(size = 18, colour = "black"),
                                     axis.title.x = element_blank(),
                                     axis.title.y = element_text(face = "bold",
-                                                                size = 18,
+                                                                size = 20,
                                                                 margin = margin(r = 10)))
     biomass_all
           
@@ -104,19 +107,6 @@
                bg = "white",  res = 300)
           size_all
           dev.off()
-          #Previous tests
-            #Levene Test for homocedasticity
-            #Effect size for Treatment
-          #Interaction model
-          #Simple model
-          #Without Treatment
-          #Model selection
-            #Veryfying interaction
-            # R2m
-            #aictab
-          #Figure
-            #saving
-          
 # Models of First Capture Time --------------------------------------------
   #Belostomatidae 
     #Previous tests
@@ -174,12 +164,16 @@
                  c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
           
     #Figure
-      belo_temcap1 <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg), log10(belostomatidae$tempocap1), 
-                                     "Time of 1º capture [s] \n log10 scale", belo_temcap1_lme, "Belostomatidae") +
+      belo_temcap1 <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg),
+                                 log10(belostomatidae$tempocap1), 
+                                 "Time of 1º capture [s]\nlog 10 scale",
+                                 belo_temcap1_lme, "Belostomatidae") +
             scale_x_continuous(breaks = c(1, 1.30, 1.48, 1.6), labels = c(10, 20, 30, 40),
-                               limits = c(0.8, 1.8)) +
+                               limits = c(0.8, 1.6)) +
             scale_y_continuous(breaks = c(1, 2, 3, 4), labels = c(10, 100, 1000, 10000),
-                               limits = c(0.8, 4.5))+
+                               limits = c(0.8, 4.5)) +
+            theme(axis.text = element_text(size = 18, colour = "black"),
+                  legend.position = "none") +
             annotation_logticks()
       belo_temcap1
           
@@ -259,7 +253,9 @@
           scale_x_continuous(breaks = c(1, 1.4, 1.7, 2, 2.18), labels = c(10, 25, 50, 100, 150),
                              limits = c(0.8, 2.2)) +
           scale_y_continuous(breaks = c(1, 1.48, 1.7, 2, 2.48, 2.7, 3), labels = c(10, 30, 50, 100, 300, 500, 1000),
-                             limits = c(0.8, 3))+
+                             limits = c(0.8, 3)) +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none") +
           annotation_logticks()
         
       aniso_temcap1
@@ -334,7 +330,9 @@
           scale_x_continuous(breaks = c(1, 1.3, 1.48), labels = c(10, 20, 30),
                              limits = c(0.8, 1.50)) +
           scale_y_continuous(breaks = c(1, 2, 3, 3.7), labels = c(10, 100, 1000, 5000),
-                             limits = c(0.8, 4))+
+                             limits = c(0.8, 4)) +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+                legend.position = "none") +
           annotation_logticks()
         zygo_temcap1  
         
@@ -400,13 +398,15 @@
                c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
         
     #Figure
-      noto_temcap1 <- model_line_1line(notonectidae, log10(notonectidae$biomassa_mg),
+      noto_temcap1 <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
                                          log10(notonectidae$tempocap1), 
                                          "Time of first capture [s] \n log10 scale", noto_temcap1_lme, "Notonectidae")+
           scale_x_continuous(breaks = c(0.84, 1, 1.18,1.30), labels = c(7 ,10, 15, 20),
                              limits = c(0.8, 1.3)) +
           scale_y_continuous(breaks = c(1, 2, 3, 4), labels = c(10, 100, 1000, 10000),
                              limits = c(0.8, 4.5)) +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none") +
           annotation_logticks()
       noto_temcap1
       
@@ -558,6 +558,8 @@
           scale_y_continuous(breaks = c(-3.3, -2, -1, 0, 1, 2, 3, 4),
                              labels = c(-2000, -100, -10, 0, 10, 100, 1000, 10000))+
           geom_hline(yintercept = 0, linetype =3)+
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")+
           annotation_logticks()
         aniso_diftemcap
         
@@ -655,7 +657,9 @@
                              labels = c(10, 20, 30)) +
           scale_y_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3, 4),
                              labels = c(-1000, -100, -10, 0, 10, 100, 1000, 10000))+
-          geom_hline(yintercept = 0, linetype = 3)+
+          geom_hline(yintercept = 0, linetype = 3) +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+                legend.position = "none") +
           annotation_logticks()
         zygo_diftemcap 
         
@@ -712,6 +716,10 @@
         
         plot(sort(cooks.distance(aniso_temp_lme_notrat)))
         
+        anisoptera$tempomanip1[16] <- NA #Cd >0.5
+        anisoptera$tempomanip1[12] <- NA #Cd >0.7
+        anisoptera$tempomanip1[18] <- NA #Cd >0.5
+        
     #Model selection
       #Veryfying interaction
         anova(aniso_temp_lme_int, aniso_temp_lme)
@@ -734,8 +742,9 @@
                              labels = c(10, 20, 30, 40, 50, 100), limits = c(0.9, 2.17)) +
           scale_y_continuous(breaks = c(0.7, 1, 1.7, 2),
                              labels = c(5, 10, 50, 100))+
-          geom_hline(yintercept = 0, linetype =3)+
-          annotation_logticks()
+          annotation_logticks() +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+                legend.position = "none")
         aniso_temp
         
         #saving
@@ -808,6 +817,8 @@
                              labels = c(5, 10, 20, 30)) +
           scale_y_continuous(breaks = c(0.7, 1, 1.3, 1.7, 2),
                              labels = c(5, 10, 20, 50, 100))+
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none") +
           annotation_logticks()
        zygo_temp
         
@@ -828,7 +839,7 @@
         cohen.d(d = notonectidae$tempomanip1, f = notonectidae$tratamento, na.rm = T)
         
     #Interaction model
-      noto_temp_lme_int <- lmer(log(tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
+      noto_temp_lme_int <- lmer((tempomanip1) ~ log(biomassa_mg)*tratamento + (1|bloco),
                                   data = notonectidae, na.action = na.omit, REML = F)
         summary(noto_temp_lme_int)
         
@@ -839,7 +850,7 @@
         plot(sort(cooks.distance(noto_temp_lme_int)))
         
     #Simple model
-      noto_temp_lme <- lmer(log(tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
+      noto_temp_lme <- lmer((tempomanip1) ~ log(biomassa_mg) + tratamento + (1|bloco),
                               data = notonectidae,na.action = na.omit, REML = F)
         
         summary(noto_temp_lme)
@@ -851,7 +862,7 @@
         plot(sort(cooks.distance(noto_temp_lme)))
         
     #Without Treatment
-      noto_temp_lme_notrat <- lmer(log(tempomanip1) ~ log(biomassa_mg) + (1|bloco),
+      noto_temp_lme_notrat <- lmer((tempomanip1) ~ log(biomassa_mg) + (1|bloco),
                               data = notonectidae,na.action = na.omit, REML = F)
       
         summary(noto_temp_lme_notrat)
@@ -863,7 +874,11 @@
         plot(sort(cooks.distance(noto_temp_lme_notrat)))
         
         notonectidae$tempomanip1[14] <- NA #cook d > 1.3
+        notonectidae$tempomanip1[13] <- NA # cook d >0.7
         notonectidae$tempomanip1[29] <- NA
+        notonectidae$tempomanip1[17] <- NA
+        
+        
         
     #Model selection
       #Veryfying interaction
@@ -880,14 +895,14 @@
         
     #Figure
       noto_temp <- model_line_noline(notonectidae, log10(notonectidae$biomassa_mg),
-                                       log10(notonectidae$tempomanip1), 
-                                       "Handling Time [s]\n log10 scale",
+                                       (notonectidae$tempomanip1), 
+                                       "Handling Time [s]",
                                        noto_temcap1_lme, "Notonectidae")+
-          scale_x_continuous(breaks = c(0.7, 1, 1.18, 1.4),
-                             labels = c(5, 10, 15,  25), limits = c(0.7, 1.4)) +
-          scale_y_continuous(breaks = c(2.48, 2.7, 3, 3.3, 3.7, 4),
-                             labels = c(300, 500, 1000, 2000, 5000, 10000))+
-          annotation_logticks()
+          scale_x_continuous(breaks = c(0.845, 1, 1.18),
+                             labels = c(7, 10, 15), limits = c(0.845, 1.18)) +
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none") +
+          annotation_logticks(sides = "b")
       noto_temp
         
       #saving
@@ -903,13 +918,13 @@
   #Belostomatidae
     #Previous tests
       #Levene Test for homocedasticity
-        leveneTest(log10(belostomatidae$Totalpresascorrigido+1), center=mean, group = belostomatidae$tratamento)
+        leveneTest(log10((belostomatidae$Totalpresascorrigido+1)), center=mean, group = belostomatidae$tratamento)
         
       #Effect size for Treatment
         cohen.d(d = belostomatidae$Totalpresascorrigido, f = belostomatidae$tratamento, na.rm = T)
         
     #Interaction model
-      belo_pres_lme_int <- lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg)*tratamento +
+      belo_pres_lme_int <- lmer(log10((belostomatidae$Totalpresascorrigido+1)) ~ (biomassa_mg)*tratamento +
                                     (1|bloco), data = belostomatidae, na.action = na.omit, REML = F)
         summary(belo_pres_lme_int) 
         
@@ -919,8 +934,11 @@
         
         plot(sort(cooks.distance(belo_pres_lme_int)))
         
+        belostomatidae$Totalpresascorrigido[29] <- NA
+        
+        
     #Simple model
-      belo_pres_lme <-  lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg) + tratamento + 
+      belo_pres_lme <-  lmer(log10((belostomatidae$Totalpresascorrigido+1)) ~ (biomassa_mg) + tratamento + 
                                  (1|bloco), data = belostomatidae, na.action = na.omit, REML = F) 
         summary(belo_pres_lme)
         
@@ -930,10 +948,8 @@
         
         plot(sort(cooks.distance(belo_pres_lme)))
         
-        #belostomatidae$Totalpresascorrigido[16] <- NA #cook d > 0.56, if would need to remove
-        
     #Without Treatment
-      belo_pres_lme_notrat <- lmer(log10(Totalpresascorrigido+1) ~ log(biomassa_mg)+ 
+      belo_pres_lme_notrat <- lmer(log10((belostomatidae$Totalpresascorrigido+1)) ~ (biomassa_mg)+ 
                                      (1|bloco), data = belostomatidae, na.action = na.omit, REML = F)
         summary(belo_pres_lme_notrat)
         
@@ -958,11 +974,15 @@
         
     #Figure
       belo_pres <- model_line(belostomatidae, log10(belostomatidae$biomassa_mg),
-                                belostomatidae$Totalpresascorrigido,
-                                "N° prey consumed/day", belo_pres_lme_int, "Belostomatidae")+
+                                (log10((belostomatidae$Totalpresascorrigido+1))),
+                                "N° prey consumed/day\n log10 scale", belo_pres_lme_int, "Belostomatidae")+
           theme(legend.position = c(0.8, 0.8)) + geom_hline(yintercept = 0, linetype = 3)+
           scale_x_continuous(breaks = c(1, 1.301, 1.7, 2, 2.477),
-                             labels = c(10, 20, 50, 100, 300))+ annotation_logticks()
+                             labels = c(10, 20, 50, 100, 300))+ annotation_logticks()+
+          scale_y_continuous(breaks = c(0, 0.17609, 0.30102, 0.39794, 0.47712),
+                           labels = c(0, 0.5, 1, 1.5, 2)) + 
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
       belo_pres
       
       #saving  
@@ -1032,11 +1052,15 @@
                c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
         
     #Figure
-      aniso_pres <- model_line(anisoptera, log10(anisoptera$biomassa_mg), (anisoptera$Totalpresascorrigido),
-                                 "N° prey consumed/day",
-                                 aniso_pres_lme_int, "Anisoptera") + annotation_logticks()+
+      aniso_pres <- model_line(anisoptera, log10(anisoptera$biomassa_mg), log10(anisoptera$Totalpresascorrigido),
+                                 "N° prey consumed/day\n log10 scale",
+                                 aniso_pres_lme_int, "Anisoptera") + annotation_logticks(sides = "bl")+
           scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.698, 2),
-                             labels = c(5, 10, 20, 50, 100))
+                             labels = c(5, 10, 20, 50, 100))+
+          scale_y_continuous(breaks = c(0.1, 0.2, 0.3010299),
+                           labels = c(1.26, 1.58, 2)) +
+          theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none") 
         aniso_pres 
         
       #saving
@@ -1104,9 +1128,14 @@
               c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)")) 
         
     #Figure
-      zygo_pres <-  model_line_semlog(zygoptera, zygoptera$biomassa_mg, (zygoptera$Totalpresascorrigido+1),
+      zygo_pres <-  model_line(zygoptera, log10(zygoptera$biomassa_mg), (zygoptera$Totalpresascorrigido),
                                        "N° prey consumed/day", zygo_pres_lme,
-                                       "Zygoptera")
+                                       "Zygoptera")+ annotation_logticks(sides = "b")+
+        scale_x_continuous(breaks = c(0.69897, 1, 1.301, 1.4771),
+                           labels = c(5, 10, 20, 30)) +
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
+        
       zygo_pres
       
       #saving 
@@ -1137,7 +1166,7 @@
         plot(sort(cooks.distance(noto_pres_lme_int)))
         
     #Simple model
-      noto_pres_lme <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + tratamento + 
+      noto_pres_lme <- lmer((Totalpresascorrigido) ~ log(biomassa_mg) + tratamento + 
                                 (1|bloco), data = notonectidae, na.action = na.omit, REML = F)
         
         summary(noto_pres_lme)
@@ -1149,7 +1178,7 @@
         plot(sort(cooks.distance(noto_pres_lme)))
         
         notonectidae$Totalpresascorrigido[16] <- NA #cook d > 0.74
-        #notonectidae$Totalpresascorrigido[8] <- NA #only without it normalizes
+        notonectidae$Totalpresascorrigido[8] <- NA #only without it normalizes, c d ~0.5
        
     #Without Treatment
       noto_pres_lme_notrat <- lmer(Totalpresascorrigido ~ log(biomassa_mg) + 
@@ -1182,7 +1211,9 @@
           scale_x_continuous(breaks = c(0.845, 1, 1.176, 1.301),
                              labels = c(7, 10, 15, 20), limits = c(0.8,1.35)) +
           scale_y_continuous(breaks = c(0.8, 1, 1.25, 1.5, 1.75, 2),
-                             labels = c(0.8, 1, 1.25, 1.5, 1.75, 2))
+                             labels = c(0.8, 1, 1.25, 1.5, 1.75, 2))+
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
       noto_pres
       
       #saving  
@@ -1199,13 +1230,14 @@
   #Belostomatidae
     #Previous tests
       #Levene Test for homocedasticity
-        leveneTest(log(belostomatidae$taxacrescimento), center=mean, group = belostomatidae$tratamento)
+        leveneTest((((belostomatidae$taxacrescimento)^-7)), center=mean, group = belostomatidae$tratamento)
         
+        boxcox(belostomatidae$taxacrescimento ~ belostomatidae$tratamento, lambda = c(-15,0)) #-0.5
       #Effect size for Treatment
         cohen.d(d = belostomatidae$taxacrescimento, f = belostomatidae$tratamento, na.rm = T)
         
     #Interaction model
-      belo_cresc_lme_int <- lmer(log(taxacrescimento) ~ log(biomassa_mg)*tratamento + (1|bloco),
+      belo_cresc_lme_int <- lmer((taxacrescimento^-7) ~ log(biomassa_mg)*tratamento + (1|bloco),
                                    data = belostomatidae, na.action = na.omit, REML = F)
         summary(belo_cresc_lme_int)
         
@@ -1218,7 +1250,7 @@
         #belostomatidae$taxacrescimento[17] <- NA #cook d > 0.58 #even in this way, not normalized
         
     #Simple model
-      belo_cresc_lme <- lmer(log(taxacrescimento) ~ biomassa_mg + tratamento + (1|bloco),
+      belo_cresc_lme <- lmer((taxacrescimento^-7) ~ biomassa_mg + tratamento + (1|bloco),
                                data = belostomatidae, na.action = na.omit, REML = F)
         summary(belo_cresc_lme)
         
@@ -1229,7 +1261,7 @@
         plot(sort(cooks.distance(belo_cresc_lme)))
         
     #Without Treatment
-      belo_cresc_lme_notrat <- lmer(log(taxacrescimento) ~ biomassa_mg + (1|bloco),
+      belo_cresc_lme_notrat <- lmer((taxacrescimento^-7) ~ biomassa_mg + (1|bloco),
                                data = belostomatidae, na.action = na.omit, REML = F)
         summary(belo_cresc_lme_notrat)
         
@@ -1245,6 +1277,9 @@
         
       # R2m
         r.squaredGLMM(belo_cresc_lme_int) 
+        r.squaredGLMM(belo_cresc_lme)
+        r.squaredGLMM(belo_cresc_lme_notrat)
+        
         
       #aictab
         aictab(c(belo_cresc_lme, belo_cresc_lme_int, belo_cresc_lme_notrat),
@@ -1252,13 +1287,20 @@
         
     #Figure
       belo_cresc <-  model_line(belostomatidae, log10(belostomatidae$biomassa_mg), 
-                                  log10(belostomatidae$taxacrescimento),
-                                  ynome = "Growth rate, log10 scale", 
+                                  (-(belostomatidae$taxacrescimento^-7)),
+                                  ynome = expression(paste("Growth rate [(-)boxcox scale ", lambda, "= -7]")), 
                                   model = belo_cresc_lme_int,
-                                  title = "Belostomatidae") + annotation_logticks() +
-          geom_hline(yintercept = 0, linetype = 3)
+                                  title = "Belostomatidae") + annotation_logticks(sides = "b") +
+          geom_hline(yintercept = -1, linetype = 3)+
+        scale_x_continuous(breaks = c(1, 1.301, 1.7, 2, 2.477),
+                           labels = c(10, 20, 50, 100, 300)) +
+        scale_y_continuous(breaks = c(-0.09486, -0.1593663, -0.2790816, -0.5131581 ,-0.7106813, -0.8705602, -1, -1.160144, -1.330765),
+                           labels = c(1.40, 1.3, 1.2, 1.1, 1.05, 1.02, 1, 0.98, 0.96))+
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
       belo_cresc
         
+      
       #saving     
       jpeg(filename = "growth_belos.jpg", width = 2350, height = 1900, 
            units = "px", pointsize = 12, quality = 100,
@@ -1325,14 +1367,17 @@
                c("Log(Biomass) + Treatment", "log(Biomass):Treatment", "Log(Biomass)"))
       
     #Figure
-      aniso_cresc <-  model_line_semlog_1line(anisoptera, anisoptera$biomassa_mg, 
-                                                log10(anisoptera$taxacrescimento),
-                                                ynome = "Growth rate [proportion] \n log10 scale", 
+      aniso_cresc <-  model_line_1line(anisoptera, log10(anisoptera$biomassa_mg), 
+                                                (anisoptera$taxacrescimento),
+                                                ynome = "Growth rate", 
                                                 model = belo_cresc_lme_int,
-                                                title = "Anisoptera")+
-          scale_y_continuous(breaks = c(-0.0044, 0, 0.0043, 0.0086, 0.0128, 0.017, 0.0212, 0.0253),
-                             labels = c(0.99, 1, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06)) +
-          geom_hline(yintercept = 0, linetype = 3)
+                                                title = "Anisoptera") +
+          geom_hline(yintercept = 1, linetype = 3)+ annotation_logticks(sides = "b")+
+          scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.698, 2, 2.301),
+                             labels = c(5, 10, 20, 50, 100, 200))+
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
+          
       aniso_cresc 
         
       #saving
@@ -1402,7 +1447,7 @@
     #Figure
       zygo_cresc <-  model_line_1line(zygoptera, log10(zygoptera$biomassa_mg), 
                                         log10(zygoptera$taxacrescimento),
-                                        ynome = "Growth rate [proportion] \n log10 scale", 
+                                        ynome = "Growth rate \n log10 scale", 
                                         model = zygo_cresc_lme,
                                         title = "Zygoptera")+
           scale_x_continuous(breaks = c(0.778, 1, 1.301, 1.477),
@@ -1410,7 +1455,9 @@
           scale_y_continuous(breaks = c(-0.0223,-0.0088, 0, 0.0086, 0.0212, 0.0334, 0.0414),
                              labels = c(0.95, 0.98, 1, 1.02, 1.05, 1.08, 1.10)) +
           annotation_logticks()+
-          geom_hline(yintercept = 0, linetype = 3)
+          geom_hline(yintercept = 0, linetype = 3)+
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
       zygo_cresc     
         
       #saving
@@ -1479,13 +1526,16 @@
     #Figure
       noto_cresc <-  model_line_1line(notonectidae, log10(notonectidae$biomassa_mg), 
                                         (notonectidae$taxacrescimento),
-                                        ynome = "Growth rate [proportion]", 
+                                        ynome = "Growth rate", 
                                         model = noto_cresc_lme,
                                         title = "Notonectidae")+
           scale_x_continuous(breaks = c(0.698, 1, 1.301, 1.477, 1.602),
                              labels = c(5, 10, 20, 30, 40))+
           scale_y_continuous() +
-          annotation_logticks()
+        geom_hline(yintercept = 1, linetype = 3)+
+          annotation_logticks(sides = "b")+
+        theme(axis.text = element_text(size = 18, colour = "black"),
+              legend.position = "none")
       noto_cresc 
         
       #saving

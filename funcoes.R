@@ -10,7 +10,7 @@
                  size=5, alpha = 0.8) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
       ylab(ynome)+
-      xlab("Body Size [mg] \n log10 scale")+
+      xlab("Body Size [mg]\nlog10 scale")+
       ggtitle(title)+
       labs(fill = "Treatment", shape = "Treatment")+
       theme_classic()+ scale_shape_manual(values = c(21, 22), labels = c("Ambient", "Warmed")) +
@@ -55,7 +55,7 @@
                  size=5, alpha=0.8) +
       scale_fill_manual(values = c("#66cc33","#cc0000"), labels = c("Ambient", "Warmed"))+
       ylab(ynome)+
-      xlab("Body Size [mg] \n log10 scale")+
+      xlab("Body Size [mg]\nlog10 scale")+
       ggtitle(title)+
       labs(fill = "Treatment", shape = "Treatment")+
       theme_classic()+ scale_shape_manual(values = c(21, 22), labels = c("Ambient", "Warmed")) +
@@ -162,6 +162,16 @@ logneg <- function(x){
                      no = ifelse(test = x>0, yes = log(x), no = (-log(-x)))))
 }
 
+logzero <- function(x, b = 10){
+  ifelse(test = is.na(x), yes = NA,
+         no = ifelse(test = x == 0, yes = 0,
+                     no = log(x, base = b)))
+}
 
+logplus <- function(x, b = 10){
+  ifelse(test = is.na(x), yes = NA,
+         no = ifelse(test = x == 0, yes = 0,
+                     no = log((x+1), base = b)))
+}
 
 
