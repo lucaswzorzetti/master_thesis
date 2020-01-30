@@ -56,7 +56,17 @@
           t.test(anisoptera$biomassa_mg~anisoptera$tratamento)
           t.test(zygoptera$biomassa_mg~zygoptera$tratamento)
           t.test(notonectidae$biomassa_mg~notonectidae$tratamento)
-        
+          
+        #Verificando se a biomassa varia com os blocos
+          belostomatidae %>% select(bloco, tratamento, biomassa_mg) %>%
+            group_by(bloco, tratamento) %>%
+            mutate(med = mean(biomassa_mg)) %>% summarise(mean(biomassa_mg)) #sei não...
+          #ao que parece, a maioria é "pareada", mas alguns são bem discrepantes
+          
+          belostomatidae %>% select(bloco, tratamento, biomassa_mg) %>%
+            group_by(bloco, tratamento) %>%
+            mutate(med = mean(biomassa_mg)) %>% summarise(med = mean(biomassa_mg)) %>% 
+            ggplot(aes(x = bloco, y = med))+geom_point()
 
 # Comparing biomasses between Taxa ----------------------------------------
   #Biomass
