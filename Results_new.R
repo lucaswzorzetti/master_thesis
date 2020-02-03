@@ -15,6 +15,7 @@ library(MuMIn) #R²m and R²c
 library(gnlm) #Non linear regressions
 library(AICcmodavg) #tables of model selection
 library(effsize) #effect size
+library(PairedData)
 
 #Importing 
 geral <- read.table("planilhageral_atualizada3.txt", header = T, colClasses = c(
@@ -65,6 +66,7 @@ View(geral_aq)
 #tentando juntar para calcular o efeito
 efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number",
                        suffix = c(".am", ".aq")) %>% mutate(suborfam = suborfam.aq, bloco = bloco.aq,
+                                                            par = number,
                                                             dif_compr = compr.aq-compr.am, dif_larg = larg.aq-larg.am,
                                                             dif_biomass = biomassa_mg.aq - biomassa_mg.am,
                                                             dif_ppsr = ppsr.aq-ppsr.am,
@@ -79,13 +81,13 @@ efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number",
                                                             ef_satiety = dif_temp_cap.aq-dif_temp_cap.am,
                                                             ppsr_mean = ((ppsr.aq + ppsr.am)/2),
                                                             biom_mean = ((biomassa_mg.aq +biomassa_mg.am)/2)
-                                                            ) %>% 
-                                                      select(suborfam, bloco, amostra.am, amostra.aq, dif_compr,
-                                                             dif_larg, dif_biomass,
-                                                             dif_ppsr, ef_temcap1, ef_temcap2, ef_sobrev,
-                                                             ef_cons_grav,
-                                                             ef_cons_total, ef_tempomanip1, ef_tempomanip2,
-                                                             ef_growth_rate, ef_satiety, ppsr_mean, biom_mean)
+                                                            )# %>% 
+                                                      #select(suborfam, bloco, par, amostra.am, amostra.aq, dif_compr,
+                                                             #dif_larg, dif_biomass,
+                                                             #dif_ppsr, ef_temcap1, ef_temcap2, ef_sobrev,
+                                                            # ef_cons_grav,
+                                                            # ef_cons_total, ef_tempomanip1, ef_tempomanip2,
+                                                             #ef_growth_rate, ef_satiety, ppsr_mean, biom_mean)
                 
 View(efeito_aq)
 
@@ -155,14 +157,21 @@ geral %>% select(suborfam, bloco, tratamento, biomassa_mg, ppsr) %>%
 View(geral %>% select(suborfam, bloco, tratamento, amostra, biomassa_mg) %>%
   group_by(bloco, tratamento) )
 
-geral %>% group_by(bloco) %>% summarise(n = n()) #quantos em cada bloco
+geral %>% group_by(bloco, suborfam) %>% summarise(n = n()) #quantos em cada bloco
 geral %>% group_by(suborfam, tratamento) %>% summarise(n = n()) #quantos em cd trat e cd taxa
 table_parear <- geral %>% group_by(suborfam, bloco, tratamento) %>% summarise(n = n()) #
 View(table_parear)
 
 
-
 # Comparing biomasses between Taxa ----------------------------------------
+#Descrevendo o tamanho
+geral %>% group_by(suborfam) %>% summarise(compr_medio = mean(compr),
+                                           desvio_compr = sd(compr),
+                                           larg_media = mean(larg),
+                                           desvio_larg = sd(larg),
+                                           biom_media = mean(biomassa_mg), 
+                                           desvio_biom = sd(biomassa_mg))
+
 #Biomass
 biomass_all <- geral %>% ggplot(aes(x = suborfam, y = log10(biomassa_mg), fill = suborfam))+
   geom_point(size = 5, alpha = 0.5, shape = 21)+
@@ -227,8 +236,16 @@ jpeg(filename = "tamanho_todos.jpg", width = 2350, height = 1900,
 size_all
 dev.off()
 
-##Teste de modelos
+####Teste de modelos ####
+
+
+
+
+
+
 #belos
+shapiro.test(anisoptera_ef$ef_cons_total)
+
 t.test(x = belostomatidae_ef$ef_sobrev, paired = FALSE, alternative = "greater")
 t.test(x = belostomatidae_ef$ef_temcap1, paired = FALSE, alternative = "less")
 t.test(x = belostomatidae_ef$ef_cons_total, paired = F, alternative = "less") #consumo menor sob aquecimento
@@ -269,6 +286,15 @@ efeito_aq %>% group_by(suborfam) %>% ggplot(aes(x = suborfam, y = ef_growth_rate
   geom_boxplot() + geom_hline(yintercept = 0) + theme_classic()
 
 
+
+#Verificando o efeito da média de biomassa sobre o efeito do aq
+#Belostomatidae
+teste1 <- lm(ef_growth_rate ~ biom_mean,
+     data = belostomatidae_ef)
+summary(teste1)
+Anova(teste1, type = "II")
+
+
 test <- lm(ef_growth_rate ~ 1,
    data = belostomatidae_ef)
 summary(test)
@@ -276,4 +302,24 @@ summary(test)
 
 
 
-#
+#Testando com o pacote Paired Data
+pair_tempocap1 <- paired(belostomatidae_ef$tempocap1.am, belostomatidae_ef$tempocap1.aq)
+pair_tempocap1
+
+plot(pair_tempocap1, type = "profile") 
+
+
+par_tempocap1 <- data.frame(ambiente = belostomatidae_ef$tempocap1.am,
+                    aquecido = belostomatidae_ef$tempocap1.aq)
+
+ggpaired(data = par_tempocap1, cond1 = "ambiente",
+         cond2 = "aquecido", fill = "condition")
+
+ggpaired(data = anisoptera_ef, cond1 = "tempomanip1.am",
+         cond2 = "tempomanip1.aq", fill = "condition")
+
+ggpaired(data = belostomatidae_ef, cond1 = "taxacrescimento.am",
+         cond2 = "taxacrescimento.aq", fill = "condition")
+
+wilcox.test(belostomatidae_ef$taxacrescimento.aq, belostomatidae_ef$taxacrescimento.am,
+            paired = TRUE, alternative = "greater", exact = TRUE)
