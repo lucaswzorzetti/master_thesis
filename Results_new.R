@@ -16,9 +16,10 @@ library(gnlm) #Non linear regressions
 library(AICcmodavg) #tables of model selection
 library(effsize) #effect size
 library(PairedData)
+library(magrittr)
 
 #Importing 
-geral <- read.table("planilhageral_atualizada3.txt", header = T, colClasses = c(
+geral <- read.table("planilhageral_atualizada4.txt", header = T, colClasses = c(
   "factor", "factor","factor","factor","character", "factor", "numeric", "numeric",
   "numeric","numeric",
   "numeric","numeric","numeric","factor", "numeric","numeric","numeric","numeric",
@@ -47,24 +48,26 @@ geral <- geral %>% filter(suborfam == "Anisoptera" | suborfam =="Zygoptera" | su
 geral <- geral %>% mutate(ppsr = biomassa_mg/presa_mean)
 geral <- geral[-c(31, 46, 48, 54, 91, 105), ] #Tirando dados não pareados
 
+
+geral_arrumado <- geral %>% select(suborfam, bloco, amostra, number, tratamento,
+                         presa_mean, tempocap1, tempocap2,
+                         compr, larg, biomassa_mg,
+                         fezmuda, sobrev, presas_consumidas_gravacao,
+                         Totalpresascorrigido, tempomanip1, tempomanip2,
+                         taxacrescimento, dif_temp_cap, ppsr)
+
+## Separating the Taxa ##
+belostomatidae <- filter(geral_arrumado, suborfam == "Belostomatidae")
+notonectidae <-  filter(geral_arrumado, suborfam == "Notonectidae")
+anisoptera <-  filter(geral_arrumado, suborfam == "Anisoptera")
+zygoptera <-  filter(geral_arrumado, suborfam == "Zygoptera")
+
 #Creating a table with the effect of treatment
-geral_am <- geral %>%  filter(tratamento == "Ambiente") %>% select(suborfam, bloco, amostra, number,
-                                                                   presa_mean, tempocap1, tempocap2,
-                                                                   compr, larg, biomassa_mg,
-                                                                   fezmuda, sobrev, presas_consumidas_gravacao,
-                                                                   Totalpresascorrigido, tempomanip1, tempomanip2,
-                                                                   taxacrescimento, dif_temp_cap, ppsr)
-geral_aq <- geral %>% filter(tratamento == "Aquecido") %>% select(suborfam, bloco, amostra, number,
-                                                               presa_mean, tempocap1, tempocap2,
-                                                               compr, larg, biomassa_mg,
-                                                               fezmuda, sobrev, presas_consumidas_gravacao,
-                                                               Totalpresascorrigido, tempomanip1, tempomanip2,
-                                                               taxacrescimento, dif_temp_cap, ppsr)
-View(geral_am)
-View(geral_aq)
+geral_am <- geral_arrumado %>%  filter(tratamento == "Ambiente")
+geral_aq <- geral_arrumado %>% filter(tratamento == "Aquecido") 
 
 #tentando juntar para calcular o efeito
-efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number",
+efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number", #misturou as familias
                        suffix = c(".am", ".aq")) %>% mutate(suborfam = suborfam.aq, bloco = bloco.aq,
                                                             par = number,
                                                             dif_compr = compr.aq-compr.am, dif_larg = larg.aq-larg.am,
@@ -91,11 +94,7 @@ efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number",
                 
 View(efeito_aq)
 
-## Separating the Taxa ##
-belostomatidae <- filter(geral, suborfam == "Belostomatidae")
-notonectidae <-  filter(geral, suborfam == "Notonectidae")
-anisoptera <-  filter(geral, suborfam == "Anisoptera")
-zygoptera <-  filter(geral, suborfam == "Zygoptera")
+
 
 #For the effects ##
 belostomatidae_ef <- filter(efeito_aq, suborfam == "Belostomatidae")
@@ -314,12 +313,58 @@ par_tempocap1 <- data.frame(ambiente = belostomatidae_ef$tempocap1.am,
 
 ggpaired(data = par_tempocap1, cond1 = "ambiente",
          cond2 = "aquecido", fill = "condition")
-
+##
 ggpaired(data = anisoptera_ef, cond1 = "tempomanip1.am",
          cond2 = "tempomanip1.aq", fill = "condition")
+
+##Taxa de crescimento dos significativos
+ggpaired(data = belostomatidae_ef, cond1 = "taxacrescimento.am",
+         cond2 = "taxacrescimento.aq", fill = "condition",
+         line.color = "gray", line.size = 0.4,
+         palette = "npg")
+ggpaired(data = notonectidae_ef, cond1 = "taxacrescimento.am",
+         cond2 = "taxacrescimento.aq", fill = "condition")
+
+
+#Crescimento
+wilcox.test(belostomatidae_ef$taxacrescimento.am, belostomatidae_ef$taxacrescimento.aq,
+            paired = TRUE, alternative = "less", exact = TRUE) #sign
+wilcox.test(anisoptera_ef$taxacrescimento.am, anisoptera_ef$taxacrescimento.aq,
+            paired = TRUE, alternative = "less", exact = TRUE)
+wilcox.test(zygoptera_ef$taxacrescimento.am, zygoptera_ef$taxacrescimento.aq,
+            paired = TRUE, alternative = "less", exact = TRUE)
+wilcox.test(notonectidae_ef$taxacrescimento.am, notonectidae_ef$taxacrescimento.aq,
+            paired = TRUE, alternative = "less", exact = TRUE)
+
+
+#tentativa de um modelo linear pareado
+
+model_par <- lm(signed_rank(ef_growth_rate) ~ 1,
+   belostomatidae_ef)
+
+summary(model_par)
+plot(model_par)
+
+
+model_par2 <- lm((taxacrescimento.aq-taxacrescimento.am)~biom_mean,
+                 belostomatidae_ef)
+summary(model_par2)
 
 ggpaired(data = belostomatidae_ef, cond1 = "taxacrescimento.am",
          cond2 = "taxacrescimento.aq", fill = "condition")
 
-wilcox.test(belostomatidae_ef$taxacrescimento.aq, belostomatidae_ef$taxacrescimento.am,
-            paired = TRUE, alternative = "greater", exact = TRUE)
+
+### testando com o crescimento de belostomatidae
+#efeito do bloco (dia de início do experimento)
+ggplot(belostomatidae_ef, aes(x = ef_growth_rate)) + geom_density() + facet_wrap(~bloco)
+ggplot(belostomatidae_ef, aes(x = ef_temcap1)) + geom_density() + facet_wrap(~bloco)
+
+
+
+belos_mod_cresc <- lmer(ef_growth_rate~ 1+(1|bloco),
+                        data = belostomatidae_ef)
+summary(belos_mod_cresc)
+r.squaredGLMM(belos_mod_cresc)
+Anova(belos_mod_cresc)
+
+plot(belos_mod_cresc)
