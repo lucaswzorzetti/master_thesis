@@ -19,7 +19,7 @@ library(PairedData)
 library(magrittr)
 
 #Importing 
-geral <- read.table("planilhageral_atualizada4.txt", header = T, colClasses = c(
+geral <- read.table("planilhageral_atualizada_new.limpa.txt", header = T, colClasses = c(
   "factor", "factor","factor","factor","character", "factor", "numeric", "numeric",
   "numeric","numeric",
   "numeric","numeric","numeric","factor", "numeric","numeric","numeric","numeric",
@@ -46,7 +46,10 @@ geral <- geral %>% mutate(tempocap1 = ifelse(test = is.na(tempocap1),
 geral <- geral %>% mutate(prop_cap = presas_consumidas_gravacao/3) #Proportion of captured prey
 geral <- geral %>% filter(suborfam == "Anisoptera" | suborfam =="Zygoptera" | suborfam =="Notonectidae" | (suborfam =="Belostomatidae" & biomassa_mg < 100))
 geral <- geral %>% mutate(ppsr = biomassa_mg/presa_mean)
-geral <- geral[-c(31, 46, 48, 54, 91, 105), ] #Tirando dados não pareados
+
+#Dados não pareados retirados: NA6, Z-Am-A6, ZamA7, ZAmA4, NQ7, ZAMQ9
+
+geral <- geral[-c(10, 56),] #tirando o A1 e talvez A15 () para ver se melhora a diferença de biomassa
 
 
 geral_arrumado <- geral %>% select(suborfam, bloco, amostra, number, tratamento,
@@ -67,7 +70,7 @@ geral_am <- geral_arrumado %>%  filter(tratamento == "Ambiente")
 geral_aq <- geral_arrumado %>% filter(tratamento == "Aquecido") 
 
 #tentando juntar para calcular o efeito
-efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number", #misturou as familias
+efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number", #
                        suffix = c(".am", ".aq")) %>% mutate(suborfam = suborfam.aq, bloco = bloco.aq,
                                                             par = number,
                                                             dif_compr = compr.aq-compr.am, dif_larg = larg.aq-larg.am,
@@ -92,7 +95,7 @@ efeito_aq <- left_join(x = geral_am, y = geral_aq, by = "number", #misturou as f
                                                             # ef_cons_total, ef_tempomanip1, ef_tempomanip2,
                                                              #ef_growth_rate, ef_satiety, ppsr_mean, biom_mean)
                 
-View(efeito_aq)
+#View(efeito_aq)
 
 
 
@@ -115,11 +118,18 @@ t.test(notonectidae$biomassa_mg~notonectidae$tratamento)
 efeito_aq %>% group_by(suborfam) %>%  summarise(avg = mean(abs(dif_biomass)), desvio = sd(dif_biomass), IC_min_95 = avg - desvio, IC_max_95 = avg+desvio)
 
 efeito_aq %>% group_by(suborfam) %>%
-  summarise(avg = mean(dif_biomass), desvio = sd(dif_biomass), 
-            IC_min_95 = (avg - desvio), IC_max_95 = (avg+desvio)) %>% 
-  ggplot(aes(x = suborfam, y = avg, fill = suborfam))+geom_point(size = 10, shape = 21)+
-  geom_hline(yintercept = 0)+
-  geom_errorbar(aes(ymin = IC_min_95, ymax = IC_max_95, colour = suborfam), size = 2) + theme_classic()
+  summarise(avg = mean((dif_biomass)), desvio = sd(dif_biomass), 
+            IC_min_95 = (avg - 1.96*desvio), IC_max_95 = (avg+1.96*desvio)) %>% 
+  ggplot(aes(x = suborfam, y = avg, fill = suborfam, colour = suborfam))+
+  geom_errorbar(aes(ymin = IC_min_95, ymax = IC_max_95), size = 2,
+                linetype = 1 ,show.legend = F)+
+  geom_point(size = 15, shape = 21, stroke = 3, colour = "black")+
+  geom_hline(yintercept = 0) +
+  theme_classic(base_size = 24) +
+  ylab("Diferença de Biomassa do Par") + xlab("") +
+  scale_fill_discrete(name = "Grupo Taxonomico")
+  
+  
 
 #em cada um dos taxa - biomassa
 t.test(x = belostomatidae_ef$dif_biomass, paired = FALSE, conf.level = 0.95,
@@ -379,3 +389,17 @@ r.squaredGLMM(belos_mod_cresc)
 Anova(belos_mod_cresc)
 
 plot(belos_mod_cresc)
+
+a <- ggpaired(data = efeito_aq,
+         cond1 = "taxacrescimento.am", cond2 = "taxacrescimento.aq",
+         fill = "condition",
+         line.color = "gray", line.size = 0.4,
+         palette = c("green", "red"), point.size = 2, xlab = "",
+         ylab = "Taxa de Crescimento") 
+
+b <- facet(a, facet.by = "suborfam") 
+b +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+theme(legend.position = "none") #melhor fazer separado e juntar depois, cada um com sua escala
+
+
