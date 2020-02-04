@@ -174,4 +174,10 @@ logplus <- function(x, b = 10){
                      no = log((x+1), base = b)))
 }
 
+##Função signed rank
+signed_rank <- function(x){
+  sign(x)*rank(abs(x))
+}
+
+signed_rank(c(2, -4,5,32,34,12))
 

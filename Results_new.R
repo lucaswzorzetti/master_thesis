@@ -361,8 +361,19 @@ ggplot(belostomatidae_ef, aes(x = ef_temcap1)) + geom_density() + facet_wrap(~bl
 
 
 
-belos_mod_cresc <- lmer(ef_growth_rate~ 1+(1|bloco),
+belos_mod_cresc <- lmer(ef_growth_rate~ 1 + (1|bloco),
                         data = belostomatidae_ef)
+belos_mod_cresc2 <- lm(ef_growth_rate~1,
+                         data = belostomatidae_ef)
+belos_mod_cresc3 <- lmer(ef_growth_rate ~ biom_mean + (1|bloco),
+                         data = belostomatidae_ef)
+library(bbmle)
+AICctab(belos_mod_cresc, belos_mod_cresc2, belos_mod_cresc3, base = T, weights = T)
+
+anova(belos_mod_cresc2, belos_mod_cresc)
+
+plotresid(belos_mod_cresc)
+
 summary(belos_mod_cresc)
 r.squaredGLMM(belos_mod_cresc)
 Anova(belos_mod_cresc)
