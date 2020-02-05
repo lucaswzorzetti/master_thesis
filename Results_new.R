@@ -390,16 +390,78 @@ Anova(belos_mod_cresc)
 
 plot(belos_mod_cresc)
 
-a <- ggpaired(data = efeito_aq,
+cresc <- ggpaired(data = efeito_aq,
          cond1 = "taxacrescimento.am", cond2 = "taxacrescimento.aq",
          fill = "condition",
          line.color = "gray", line.size = 0.4,
          palette = c("green", "red"), point.size = 2, xlab = "",
          ylab = "Taxa de Crescimento") 
 
-b <- facet(a, facet.by = "suborfam") 
-b +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
+cresc <- facet(cresc, facet.by = "suborfam") 
+cresc +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
   scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
 theme(legend.position = "none") #melhor fazer separado e juntar depois, cada um com sua escala
 
 
+ggpaired(data = belostomatidae_ef,
+              cond1 = "taxacrescimento.am", cond2 = "taxacrescimento.aq",
+              fill = "condition",
+              line.color = "darkgray", line.size = 0.4,
+              palette = c("green", "red"), point.size = 2, xlab = "",
+              ylab = "Taxa de Crescimento") +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+  theme(legend.position = "none")
+
+temcap1 <- ggpaired(data = efeito_aq,
+              cond1 = "tempocap1.am", cond2 = "tempocap1.aq",
+              fill = "condition",
+              line.color = "gray", line.size = 0.4,
+              palette = c("green", "red"), point.size = 2, xlab = "",
+              ylab = "Tempo de 1ª captura") 
+
+temcap1 <- facet(temcap1, facet.by = "suborfam") 
+temcap1 +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+  theme(legend.position = "none")
+
+
+
+tempomanip1 <- ggpaired(data = efeito_aq,
+                    cond1 = "tempomanip1.am", cond2 = "tempomanip1.aq",
+                    fill = "condition",
+                    line.color = "gray", line.size = 0.4,
+                    palette = c("green", "red"), point.size = 2, xlab = "",
+                    ylab = "Tempo de 1ª captura") 
+
+tempomanip1 <- facet(tempomanip1, facet.by = "suborfam") 
+tempomanip1 +  stat_compare_means(paired = TRUE, method.args = list(alternative = "greater")) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+  theme(legend.position = "none") #depois arrumar
+
+
+cons <- ggpaired(data = efeito_aq,
+                        cond1 = "Totalpresascorrigido.am", cond2 = "Totalpresascorrigido.aq",
+                        fill = "condition",
+                        line.color = "gray", line.size = 0.4,
+                        palette = c("green", "red"), point.size = 2, xlab = "",
+                        ylab = "Tempo de 1ª captura") 
+
+cons <- facet(cons, facet.by = "suborfam") 
+cons +  stat_compare_means(paired = TRUE) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+  theme(legend.position = "none")
+
+
+sobrev <- ggpaired(data = efeito_aq,
+                 cond1 = "sobrev.am", cond2 = "sobrev.aq",
+                 fill = "condition",
+                 line.color = "gray", line.size = 0.4,
+                 palette = c("green", "red"), point.size = 2, xlab = "",
+                 ylab = "Tempo de 1ª captura") 
+
+sobrev <- facet(sobrev, facet.by = "suborfam") 
+sobrev +  stat_compare_means(paired = TRUE, method.args = list(alternative = "less")) + 
+  scale_x_discrete(labels = c(" Temperatura Ambiente", "Temperatura Ambiente + 4°C")) +
+  theme(legend.position = "none")
+
+#
