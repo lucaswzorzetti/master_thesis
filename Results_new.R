@@ -1,5 +1,6 @@
 # Loading the packages and importing data ---------------------------------
 #Loading the packages
+#library(tidyverse)
 library(ggplot2) #Graphs
 library(dplyr)   #to tidy data
 library(ggpubr)  #extra functions to ggplot2
@@ -257,7 +258,7 @@ shapiro.test(anisoptera_ef$ef_cons_total)
 
 t.test(x = belostomatidae_ef$ef_sobrev, paired = FALSE, alternative = "greater")
 t.test(x = belostomatidae_ef$ef_temcap1, paired = FALSE, alternative = "less")
-t.test(x = belostomatidae_ef$ef_cons_total, paired = F, alternative = "less") #consumo menor sob aquecimento
+t.test(x = belostomatidae_ef$ef_cons_total, paired = F) #consumo menor sob aquecimento
 t.test(x = belostomatidae_ef$ef_growth_rate, paired = F, alternative = "greater") #sign
 t.test(x = belostomatidae_ef$ef_cons_grav, paired = F)
 
