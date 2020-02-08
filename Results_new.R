@@ -29,7 +29,6 @@ geral <- read.table("planilhageral_atualizada_new.limpa.txt", header = T, colCla
 ))
 str(geral)
 
-geral$presas_consumidas_gravacao[114] <- 2 #marcação errada
 geral <- mutate(geral, taxacrescimento = 
                   (((varbiom+biomassant)/biomassant)^(1/sobrev))) #growth rate  
 geral <- geral %>% mutate(biomassa_mg = biomassant*1000) # Converting to Biomass in miligrams
