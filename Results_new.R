@@ -465,3 +465,17 @@ sobrev +  stat_compare_means(paired = TRUE, method.args = list(alternative = "le
   theme(legend.position = "none")
 
 #
+
+
+summary(lme(ef_growth_rate ~ biom_mean, random =~1|bloco, data = belostomatidae_ef,
+            method = "ML"))
+
+belostomatidae_ef %>% ggplot(aes(x = biom_mean)) +
+  geom_point(size = 3, colour = "green", aes(y = taxacrescimento.am)) +
+  geom_point(size = 3, colour = "red", aes(y = taxacrescimento.aq))
+  geom_hline(yintercept = 0, linetype = 2) +
+    geom_line()+
+  ylab("Efeito do Aumento de Temperatura \n sobre a Taxa de Crescimento") + 
+  xlab("Média de Biomassa do Par [mg]") + ggtitle("Belostomatidae")+
+  theme_classic(base_size = 22)
+
