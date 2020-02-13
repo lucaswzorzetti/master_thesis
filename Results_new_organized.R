@@ -14,6 +14,7 @@ library(AICcmodavg) #tables of model selection
 library(effsize) #effect size
 library(PairedData) #trabalhar com dados pareados
 library(bbmle) #AICc tables
+library(fitdistrplus) #to fit different distributions
 
 ####Dados####
   geral <- read.table("planilhageral_atualizada_new.limpa.txt", header = T, colClasses = c(
@@ -195,63 +196,40 @@ View(geral)
         
         qqnorm(belos_cresc, ~ranef(., level=0))
 
+        leveneTest((belostomatidae_ef$ef_growth_rate), center=mean,
+                   group = belostomatidae_ef$bloco) #homocedasticidade entre os blocos
         
       #Modelos
-        gr_belo_full <- lme(ef_growth_rate ~ biom_mean + dif_biomass, random=~1|bloco,
-                             data = belostomatidae_ef, method = "ML")
-          summary(gr_belo_full)        
-          Anova(gr_belo_full)
+        #hipótese1: aquec e biom.
+        g_mfull <- lme(ef_growth_rate ~ biom_mean, random = ~1|bloco,
+                    data = belostomatidae_ef, method = "ML") 
+          summary(g_mfull)
+          Anova(g_mfull) #biomassa significativa
+          r.squaredGLMM(g_mfull)
+          
+        #hipótese2: a biom não interfere no efeito do aquecimento
+        g_m1 <- lme(ef_growth_rate ~ 1, random = ~1|bloco,
+                    data = belostomatidae_ef, method = "ML")
+          summary(g_m1)
+          
         
-        gr_belo_nomean <- lmer(ef_growth_rate ~ dif_biomass + (1|bloco),
-                               data = belostomatidae_ef, REML = F)
-          summary(gr_belo_nomean)
-          Anova(gr_belo_nomean)
-          
-        gr_belo_nodif <- lmer(ef_growth_rate ~ biom_mean + (1|bloco),
-                              data = belostomatidae_ef, REML = F) #se a dif de biom alterou os resultados
-        summary(gr_belo_nodif)
-        Anova(gr_belo_nodif)
+          #Protocolo: 1° testar a hip principal, se não for significativa,
+          # fazer o modelo nulo e compará-los com critério de info (AICc)
         
-        gr_belo_nofixed <- lmer(ef_growth_rate ~ 1 + (1|bloco), #se apenas o tratamento e o bloco importam
-                                data = belostomatidae_ef, REML = F)
-          
-        summary(gr_belo_nofixed)  
-        
-        aictab(cand.set = c(gr_belo_full, gr_belo_nodif, gr_belo_nomean, 
-               gr_belo_nofixed))
-        AICctab(gr_belo_full, gr_belo_nodif, gr_belo_nomean, 
-                gr_belo_nofixed, base = T, weights = T) 
-        anova(gr_belo_nodif, gr_belo_nofixed) #os dois mais plausíveis
-        
-        r.squaredGLMM(gr_belo_nodif)
-        r.squaredGLMM(gr_belo_nofixed)
-        
-        #Testando se o random effect é necessário
-          gr_norandom <- lm(ef_growth_rate ~ 1,
-                             data = belostomatidae_ef)
-          summary(gr_norandom)
-          
-          gr_nodif_norandom <- lm(ef_growth_rate ~ biom_mean, data = belostomatidae_ef)
-          
-          anova(gr_belo_nofixed, gr_norandom) #entre os menores
-          
-          anova(gr_belo_nodif, gr_nodif_norandom) #entre os com biom_mean
-              #não é diferente, utilizar o random effect
-          
-          AICctab(gr_belo_nodif, gr_nodif_norandom,gr_belo_nofixed, gr_norandom,
-                  base = T, weights = T, mnames = c("delta_Gr ~ mBiom + 1|dia",
-                                                    "delta_Gr ~ mBiom",
-                                                    "delta_Gr ~ 1 + 1|dia",
-                                                    "delta_Gr ~ 1")) #o nulo sem random effects venceu
       #Avaliando o modelo
-          ggdensity(resid(gr_belo_nodif))
+        g_mfull <- lme(ef_growth_rate ~ biom_mean, random = ~1|bloco,
+                         data = belostomatidae_ef, method = "REML")
+          summary(g_mfull)
+        
+          ggdensity(resid(g_mfull))
           
-          ggqqplot(resid(gr_belo_nodif)) #normalidade dos resíduos
-          shapiro.test(resid(gr_belo_nodif)) #normality of residuals
+          ggqqplot(resid(g_mfull)) #normalidade dos resíduos
+          shapiro.test(resid(g_mfull)) #normality of residuals
           
-          plot(sort(cooks.distance(gr_belo_nodif)))
+          CookD(g_mfull)
           
-          Anova(gr_belo_nodif)
+          Anova(g_mfull)
+          
            
       #Fazendo um plot
         belostomatidae_ef %>% ggplot(aes(x = biom_mean, y = ef_growth_rate)) +
@@ -276,7 +254,29 @@ View(geral)
           theme(legend.position = "none")
         
     ###Anisoptera ####
+      #normalidade dos dados
+        ggdensity(anisoptera_ef$ef_growth_rate) 
+        ggqqplot(anisoptera_ef$ef_growth_rate) 
         
+        shapiro.test(anisoptera_ef$ef_growth_rate) #
+        
+        fit_w  <- fitdist(anisoptera_ef$ef_growth_rate, "geometric")
+        
+      #Full model
+        ag_mfull <- lme(ef_growth_rate ~ log(biom_mean), random = ~1|bloco,
+                        data = anisoptera_ef, method = "ML")
+          plot.lme(ag_mfull)
+          
+          fitdistr(resid(ag_mfull), densfun="t")
+          
+          
+          
+          
+          
+        ag_mnull <- lme(ef_growth_rate ~ 1, random = ~1|bloco,
+                        data = anisoptera_ef, method = "REML")
+          ggqqplot(resid(ag_mnull))
+          
         
         
         
