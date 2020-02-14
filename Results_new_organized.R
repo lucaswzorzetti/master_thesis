@@ -268,16 +268,19 @@ View(geral)
           plot.lme(ag_mfull)
           
           fitdistr(resid(ag_mfull), densfun="t")
+          library(glmm)
+        glmer(ef_growth_rate ~ (biom_mean) + (1|bloco),
+             data = anisoptera_ef, family = gaussian(link = "inverse"))
           
           
           
           
           
-        ag_mnull <- lme(ef_growth_rate ~ 1, random = ~1|bloco,
-                        data = anisoptera_ef, method = "REML")
-          ggqqplot(resid(ag_mnull))
-          
+        summary(lmer(taxacrescimento ~ biomassa_mg + (1|bloco) + (1|number),
+                     data = anisoptera))
         
+          ggqqplot(resid(ag_mnull))
+         
         
         
         
