@@ -45,7 +45,7 @@ geral <- geral %>% filter(suborfam == "Anisoptera" |#excluindo os adultos de Bel
                           suborfam =="Zygoptera" | #para apenas trabalhar com ninfas
                           suborfam =="Notonectidae" | 
                           (suborfam =="Belostomatidae" & biomassa_mg < 100))
-geral <- geral[-c(10, 56),] #dado excluido por problemas na medição
+geral <- geral[-c(10, 56),] #dados excluidos por problemas na medição
 View(geral)
 
   #Deixando apenas o essencial
@@ -92,6 +92,21 @@ View(geral)
 
 #### Análise dos dados - [pareada apenas e com modelos lme] ####
 ####Exploração geral dos dados ####
+  #Linha do tempo - para verificar a distribuição temporal das amostras
+      geral %>%  group_by(bloco, suborfam, tratamento) %>% 
+        summarise(n = n()) %>% 
+        ggplot()+
+        geom_bar(aes(y = n, x = bloco, fill = suborfam, colour = tratamento),
+                          stat="identity") +
+        xlab("Dia de Início da Amostra \n [referência: início do experimento]") + ylab("Quantidade de amostras feitas")+
+        theme_classic(base_size = 22) + guides(fill = guide_legend(title="Grupo Taxonômico")) +
+        scale_fill_discrete(labels = c("Libélula", "Barata d'água", "Notonecto",
+                                       "Donzelinha")) +
+        scale_x_discrete(labels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                    11, 12)) +
+        scale_y_continuous(breaks = c(0, 2, 4, 6, 8, 10, 12, 14))+
+        scale_colour_manual(values = c("black", "black"))
+      
   #N amostral dos taxa e entre os blocos
       efeito_aq %>% group_by(suborfam, bloco) %>% summarise(n = n()) 
       
@@ -173,6 +188,11 @@ View(geral)
                                                           alternative = "greater")[[3]][1])
                       ) #tudo OK
           
+        #Testando com anova, por tratamento e dia de início
+          Anova(aov(biomassa_mg~tratamento + bloco, data = belostomatidae))
+          Anova(aov(biomassa_mg~tratamento + bloco, data = anisoptera))
+          Anova(aov(biomassa_mg~tratamento + bloco, data = zygoptera))
+          Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
 
   #####Taxa de Crescimento ####
    #Effect Size
@@ -180,15 +200,17 @@ View(geral)
               
     ####Belostomatidae ####
       #Normalidade da diferença  
-        ggdensity(belostomatidae_ef$ef_growth_rate) #parece normal
-        ggqqplot(belostomatidae_ef$ef_growth_rate) #parece bastante normal
+        ggdensity(belostomatidae$taxacrescimento) #parece normal
+        ggqqplot(belostomatidae$taxacrescimento) #parece bastante normal
         
-        shapiro.test(belostomatidae_ef$ef_growth_rate) #é normal
+        shapiro.test(belostomatidae$taxacrescimento) #é normal
         
       #Full model
-        belos_cresc <- lme(ef_growth_rate ~ biom_mean,
+        belos_cresc_int <- lme(taxacrescimento ~ tratamento*biomassa_mg,
                            random = ~ 1|bloco, method = "ML",
-                           data = belostomatidae_ef)
+                           data = belostomatidae)
+          summary(belos_cresc)
+          Anova(belos_cresc, type = "III")
         
         plot.lme(belos_cresc)
         plot(belostomatidae_ef$biom_mean, resid(belos_cresc))
@@ -284,6 +306,24 @@ View(geral)
         
         
         
-        
-        
+###### novo velho jeito ####
+#### Taxa Crescimento ####
+  #Belostomatidae
+    belo_cresc_int <- lme(taxacrescimento ~ biomassa_mg*tratamento, random = ~1|bloco,
+                          data = belostomatidae, method = "ML") 
+      summary(belo_cresc_int)  
+      Anova(belo_cresc_int, type = "III") #inter signi
+      
+      #pressupoições
+      qqPlot(resid(belo_cresc_int)) #residuos normais
+      leveneTest(resid(belos_cresc_int)~belostomatidae$tratamento)
+      
+      
+    
+    
+    
+    
+    
+    
+    
                                                        
