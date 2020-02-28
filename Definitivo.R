@@ -169,6 +169,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       summary(aniso_cresc_int)  
       Anova(aniso_cresc_int, type = "III") #inter
       plot(aniso_cresc_int)
+      CookD(aniso_cresc_int)
       
     aniso_cresc <- lme(taxacrescimento ~ biomassa_mg + tratamento, random = ~1|bloco,
                        data = anisoptera,  na.action = na.omit,
@@ -186,7 +187,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       AICctab(aniso_cresc, aniso_cresc_int, base = T, weights = T)
       
       anisoptera$taxacrescimento[4] <- NA #cookD > 1
-      anisoptera$taxacrescimento[16] <- NA #cookD > 0.5
+      #anisoptera$taxacrescimento[16] <- NA #preciso apenas no modelo simples
       
       
     #pressupoições
