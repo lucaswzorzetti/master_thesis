@@ -181,3 +181,39 @@ signed_rank <- function(x){
 
 signed_rank(c(2, -4,5,32,34,12))
 
+#####Nova função gráfica #####
+
+plot_lucas <- function(model, dados, yaxis){
+  predictions <- ggpredict(model, terms = c("biomassa_mg", "tratamento"))
+  predictions
+  
+  ambiente <- predictions %>% filter(group == "Ambiente")
+  aquecido <- predictions %>% filter(group == "Aquecido")
+  
+  ggplot() +
+    geom_line(data = ambiente, aes(x = x, y = predicted),
+              color = "green", size = 3) +
+    geom_line(data = aquecido, aes(x = x, y = predicted),
+              color = "red", size = 3) +
+    geom_ribbon(data = ambiente, 
+                aes(x = x, ymin = predicted - std.error,
+                    ymax = predicted + std.error), 
+                fill = "lightgrey", alpha = 0.2) +
+    geom_ribbon(data = aquecido, 
+                aes(x = x, ymin = predicted - std.error,
+                    ymax = predicted + std.error), 
+                fill = "lightcoral", alpha = 0.2) +
+    geom_point(data = dados, size = 3,
+               aes(x = biomassa_mg,
+                   y = yaxis,
+                   colour = tratamento))+
+    scale_color_manual(values = c("green", "red"),
+                       labels = c("Temperatura Ambiente",
+                                  "Temperatura Ambiente + 4°C"))+
+    labs(color = "Tratamento")+
+    xlab("Biomassa [mg]") + 
+    theme(legend.title = element_text("Tratamento"))+
+    theme_classic(base_size = 22)
+  
+}
+ 

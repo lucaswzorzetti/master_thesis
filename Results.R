@@ -50,6 +50,19 @@
         
         stop
         
+        geral %>%  group_by(bloco, suborfam, tratamento) %>% 
+          summarise(n = n()) %>% 
+          ggplot()+
+          geom_bar(aes(y = n, x = bloco, fill = suborfam, colour = tratamento),
+                   stat="identity") +
+          xlab("Dia de Início da Amostra \n [referência: início do experimento]") + ylab("Quantidade de amostras feitas")+
+          theme_classic(base_size = 22) + guides(fill = guide_legend(title="Grupo Taxonômico")) +
+          scale_fill_discrete(labels = c("Libélula", "Barata d'água", "Notonecto",
+                                         "Donzelinha")) +
+          scale_x_discrete(labels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                      11, 12)) +
+          scale_y_continuous(breaks = c(0, 2, 4, 6, 8, 10, 12, 14))+
+          scale_colour_manual(values = c("black", "black"))
 # Previous tests ----------------------------------------------------------
         #To verify if the covariable vary with treatment
           t.test(belostomatidae$biomassa_mg~belostomatidae$tratamento)

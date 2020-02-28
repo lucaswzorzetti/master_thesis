@@ -88,6 +88,8 @@ View(geral)
       notonectidae <-  filter(geral_arrumado, suborfam == "Notonectidae")
       anisoptera <-  filter(geral_arrumado, suborfam == "Anisoptera")
       zygoptera <-  filter(geral_arrumado, suborfam == "Zygoptera")
+      
+      #a
     
 
 #### Análise dos dados - [pareada apenas e com modelos lme] ####
