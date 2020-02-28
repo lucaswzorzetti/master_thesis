@@ -196,7 +196,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       
     #plot                  
       plot_lucas(aniso_cresc_int, dados = anisoptera, yaxis = anisoptera$taxacrescimento)          
-                  
+qq                  
                   
                   
                   
