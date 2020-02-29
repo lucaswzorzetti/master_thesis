@@ -206,10 +206,12 @@ plot_lucas <- function(model, dados, yaxis){
     geom_point(data = dados, size = 3,
                aes(x = biomassa_mg,
                    y = yaxis,
-                   colour = tratamento))+
+                   colour = tratamento,
+                   shape = tratamento))+
     scale_color_manual(values = c("green", "red"),
                        labels = c("Temperatura Ambiente",
                                   "Temperatura Ambiente + 4°C"))+
+    guides(shape = "none")+
     labs(color = "Tratamento")+
     xlab("Biomassa [mg]") + 
     theme(legend.title = element_text("Tratamento"))+
