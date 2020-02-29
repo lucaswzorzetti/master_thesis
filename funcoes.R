@@ -183,12 +183,12 @@ signed_rank(c(2, -4,5,32,34,12))
 
 #####Nova função gráfica #####
 
-plot_lucas <- function(model, dados, yaxis){
-  predictions <- ggpredict(model, terms = c("biomassa_mg", "tratamento"))
-  predictions
+plot_lucas <- function(model, dados, eixo_y){
+  predict_fun <- ggpredict(model, terms = c("biomassa_mg", "tratamento"))
+  predict_fun
   
-  ambiente <- predictions %>% filter(group == "Ambiente")
-  aquecido <- predictions %>% filter(group == "Aquecido")
+  ambiente <- predict_fun %>% filter(group == "Ambiente")
+  aquecido <- predict_fun %>% filter(group == "Aquecido")
   
   ggplot() +
     geom_line(data = ambiente, aes(x = x, y = predicted),
@@ -203,19 +203,18 @@ plot_lucas <- function(model, dados, yaxis){
                 aes(x = x, ymin = predicted - std.error,
                     ymax = predicted + std.error), 
                 fill = "lightcoral", alpha = 0.2) +
-    geom_point(data = dados, size = 3,
-               aes(x = biomassa_mg,
-                   y = yaxis,
-                   colour = tratamento,
-                   shape = tratamento))+
-    scale_color_manual(values = c("green", "red"),
+    geom_point(data = dados, aes(x = biomassa_mg,
+                                 y = eixo_y,
+                                 colour = tratamento,
+                                 shape = tratamento), size = 3)+
+    theme_classic(base_size = 16)+
+    scale_shape_discrete(guide = F)+
+    theme(legend.position = "bottom")+
+    scale_color_manual(name = "Condição Experimental",
+                       values = c("green", "red"),
                        labels = c("Temperatura Ambiente",
                                   "Temperatura Ambiente + 4°C"))+
-    guides(shape = "none")+
-    labs(color = "Tratamento")+
-    xlab("Biomassa [mg]") + 
-    theme(legend.title = element_text("Tratamento"))+
-    theme_classic(base_size = 22)
+    xlab("Biomassa [mg]")
   
 }
- 
+plot_lucas(model = belo_cresc_int2, dados = belostomatidae, eixo_y = belostomatidae$taxacrescimento) 

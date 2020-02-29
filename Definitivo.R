@@ -135,7 +135,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       ambiente <- predictions %>% filter(group == "Ambiente")
       aquecido <- predictions %>% filter(group == "Aquecido")
       
-      ggplot() +
+      cresc_belo <- ggplot() +
         geom_line(data = ambiente, aes(x = x, y = predicted),
                            color = "green", size = 3) +
         geom_line(data = aquecido, aes(x = x, y = predicted),
@@ -151,25 +151,70 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
         geom_point(data = belostomatidae, size = 3,
                    aes(x = biomassa_mg,
                        y = taxacrescimento,
+                       colour = tratamento,
+                       shape = tratamento))+
+        theme_classic(base_size = 16)+
+        theme(legend.position="bottom")+
+        scale_shape_discrete(guide = F)+
+        scale_color_manual(name = "Condição Experimental",
+                           values = c("green", "red"),
+                           labels = c("Temperatura Ambiente",
+                                      "Temperatura Ambiente + 4°C"))+
+        scale_x_continuous(breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                           limits = c(4, 40.000001))+
+        xlab("Biomassa [mg]") + ylab("Taxa de Crescimento") +
+        geom_hline(yintercept = 1, linetype =2)
+      cresc_belo
+      
+      
+      cresc_belo_noleg <- ggplot() +
+        geom_line(data = ambiente, aes(x = x, y = predicted),
+                  color = "green", size = 3) +
+        geom_line(data = aquecido, aes(x = x, y = predicted),
+                  color = "red", size = 3) +
+        geom_ribbon(data = ambiente, 
+                    aes(x = x, ymin = predicted - std.error,
+                        ymax = predicted + std.error), 
+                    fill = "lightgrey", alpha = 0.5) +
+        geom_ribbon(data = aquecido, 
+                    aes(x = x, ymin = predicted - std.error,
+                        ymax = predicted + std.error), 
+                    fill = "lightcoral", alpha = 0.5) +
+        geom_point(data = belostomatidae, size = 3, show.legend = FALSE,
+                   aes(x = biomassa_mg,
+                       y = taxacrescimento,
                        colour = tratamento))+
         scale_color_manual(values = c("green", "red"),
                            labels = c("Temperatura Ambiente",
                                       "Temperatura Ambiente + 4°C"))+
+        scale_x_continuous(breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                           limits = c(4, 40.000001))+
         labs(color = "Tratamento")+
         xlab("Biomassa [mg]") + ylab("Taxa de Crescimento") +
         geom_hline(yintercept = 1, linetype =2)+
-        theme(legend.title = element_text("Tratamento"))+
         theme_classic(base_size = 22)
-  
+      
+      
+      cresc_belo_noleg
+      
+      #salvando
+        png(filename = "crescimento_belo.jpg", width = 10000, height = 10000, 
+             units = "px",
+             bg = "white",  res = 600)
+        cresc_belo
+        dev.off()
+      
       
   #Anisoptera
-    aniso_cresc_int <- lme(taxacrescimento ~ biomassa_mg*tratamento, random = ~1|bloco,
+    aniso_cresc_int <- lme((taxacrescimento) ~ biomassa_mg*tratamento, random = ~1|bloco,
                             data = anisoptera, method = "ML", na.action = na.omit,
                            weights = varIdent(form = ~1|tratamento)) 
       summary(aniso_cresc_int)  
       Anova(aniso_cresc_int, type = "III") #inter
       plot(aniso_cresc_int)
       CookD(aniso_cresc_int)
+      
+      shapiro.test(resid(aniso_cresc_int))
       
     aniso_cresc <- lme(taxacrescimento ~ biomassa_mg + tratamento, random = ~1|bloco,
                        data = anisoptera,  na.action = na.omit,
@@ -182,21 +227,21 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       
       CookD(aniso_cresc)
       
-      r.squaredGLMM(belo_cresc)
+      r.squaredGLMM(aniso_cresc)
       
-      AICctab(aniso_cresc, aniso_cresc_int, base = T, weights = T)
+      AICctab(aniso_cresc, aniso_cresc_int, base = T, weights = T) #inter preferivel pelo AICc
       
       anisoptera$taxacrescimento[4] <- NA #cookD > 1
-      #anisoptera$taxacrescimento[16] <- NA #preciso apenas no modelo simples
+      anisoptera$taxacrescimento[16] <- NA #preciso apenas no modelo simples
       
       
     #pressupoições
-      qqPlot(resid(aniso_cresc)) #residuos normais
-      leveneTest(resid(belo_cresc)~belostomatidae$bloco) #dia de inicio com igual variancia
-      leveneTest(resid(belo_cresc)~belostomatidae$tratamento) #sem homocedas
+      qqPlot(resid(aniso_cresc)) #
+      leveneTest(resid(aniso_cresc)~anisoptera$bloco) #
+      leveneTest(resid(aniso_cresc)~anisoptera$tratamento) # homocedastico
       
     #plot                  
-      plot_lucas(aniso_cresc_int, dados = anisoptera, yaxis = anisoptera$taxacrescimento)          
+      plot_lucas(aniso_cresc_int, dados = anisoptera, eixo_y = anisoptera$taxacrescimento)          
 qq                  
                   
                   
