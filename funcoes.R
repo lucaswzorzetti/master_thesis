@@ -207,8 +207,8 @@ plot_lucas <- function(model, dados, eixo_y){
                                  y = eixo_y,
                                  colour = tratamento,
                                  shape = tratamento), size = 3)+
-    theme_classic(base_size = 16)+
-    scale_shape_discrete(guide = F)+
+    theme_classic (base_size = 16)+
+    scale_shape_discrete (guide = F)+
     theme(legend.position = "bottom")+
     scale_color_manual(name = "Condição Experimental",
                        values = c("green", "red"),

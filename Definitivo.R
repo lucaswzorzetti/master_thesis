@@ -197,7 +197,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       
       cresc_belo_noleg
       
-      #salvando
+      #salvando (salvar com 600 dpi, e )
         png(filename = "crescimento_belo.jpg", width = 10000, height = 10000, 
              units = "px",
              bg = "white",  res = 600)
@@ -241,11 +241,43 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       leveneTest(resid(aniso_cresc)~anisoptera$tratamento) # homocedastico
       
     #plot                  
-      plot_lucas(aniso_cresc_int, dados = anisoptera, eixo_y = anisoptera$taxacrescimento)          
-qq                  
-                  
-                  
-                  
-                  
+      cresc_aniso <- plot_lucas(aniso_cresc, dados = anisoptera,
+                                eixo_y = anisoptera$taxacrescimento) +
+        ylab("Taxa de Crescimento") +
+        scale_x_continuous(breaks = c(0, 25, 50, 75,100, 125, 150, 175)) +
+        geom_hline(yintercept = 1, linetype = 2)
+      cresc_aniso
+
+  #Zygoptera
+      zygo_cresc_int <- lme(taxacrescimento ~ biomassa_mg*tratamento, random = ~1|bloco,
+                        data = zygoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+       
+        summary(zygo_cresc_int)  
+        Anova(zygo_cresc_int, type = "III") #inter
+        plot(zygo_cresc_int)
+        CookD(zygo_cresc_int)
+        shapiro.test(resid(zygo_cresc_int))             
+      
+      zygo_cresc <- lme(log(taxacrescimento) ~log(biomassa_mg)+tratamento, random = ~1|bloco,
+                        data = zygoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))       
+        summary(zygo_cresc)
+        Anova(zygo_cresc, type = "II")
+        plot(zygo_cresc)
+        CookD(zygo_cresc)
+        shapiro.test(resid(zygo_cresc))
+      
+        r.squaredGLMM(zygo_cresc)
+        
+        zygoptera$taxacrescimento[18] <- NA
+        
+        AICctab(zygo_cresc, zygo_cresc_int, base = T, weights = T)     
+        leveneTest()
+        
+        #plot
+        plot_lucas(model = zygo_cresc, dados = zygoptera,
+                   eixo_y = zygoptera$taxacrescimento)
+          
                   
                   
