@@ -259,7 +259,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
         CookD(zygo_cresc_int)
         shapiro.test(resid(zygo_cresc_int))             
       
-      zygo_cresc <- lme(log(taxacrescimento) ~log(biomassa_mg)+tratamento, random = ~1|bloco,
+      zygo_cresc <- lme(taxacrescimento ~biomassa_mg+tratamento, random = ~1|bloco,
                         data = zygoptera, method = "ML", na.action = na.omit,
                         weights = varIdent(form = ~1|tratamento))       
         summary(zygo_cresc)
@@ -270,14 +270,192 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       
         r.squaredGLMM(zygo_cresc)
         
-        zygoptera$taxacrescimento[18] <- NA
+        zygoptera$taxacrescimento[18] <- NA #cook D >0.5
         
         AICctab(zygo_cresc, zygo_cresc_int, base = T, weights = T)     
-        leveneTest()
+        leveneTest(resid(zygo_cresc)~zygoptera$tratamento, na.action = na.omit())
         
         #plot
-        plot_lucas(model = zygo_cresc, dados = zygoptera,
-                   eixo_y = zygoptera$taxacrescimento)
+          plot_lucas(model = zygo_cresc, dados = zygoptera,
+                   eixo_y = zygoptera$taxacrescimento) +
+            ylab("Taxa de Crescimento") + geom_hline(yintercept = 1, linetype = 2)
+            scale_x_continuous(breaks = c(0, 5, 10, 15, 20, 25, 30, 35))
+            
+  #Notonectidae
+    noto_cresc_int <- lme(taxacrescimento ~ biomassa_mg + tratamento,
+                          random = ~1|bloco, data = notonectidae,
+                          method = "ML", na.action = na.omit,
+                          weights = varIdent(form = ~1|tratamento))
+      summary(noto_cresc_int)    
+      Anova(noto_cresc_int, type = "III")
+      plot(noto_cresc_int)
+      CookD(noto_cresc_int)
+      shapiro.test(resid(noto_cresc_int))
+      
+    noto_cresc <- lme(taxacrescimento ~biomassa_mg + tratamento, random = ~1|bloco,
+                      data = notonectidae, method = "ML", na.action = na.omit,
+                      weights = varIdent(form = ~1|tratamento))
+      summary(noto_cresc)
+      Anova(noto_cresc, type = "II")
+      plot(noto_cresc)
+      CookD(noto_cresc)
+      shapiro.test(resid(noto_cresc))
+      
+      notonectidae$taxacrescimento[1] <- NA
+      #notonectidae$taxacrescimento[15] <- NA  #cookD > 0.5
+      
+    #plot
+        plot_lucas(model = noto_cresc, dados = notonectidae,
+                   eixo_y = notonectidae$taxacrescimento) +
+          ylab("Taxa de Crescimento") + geom_hline(yintercept = 1, linetype = 2) +
+          scale_x_continuous(breaks = c(0, 6, 8, 10, 12, 14, 16, 18, 20),
+                             limits = c(6, 21)) +
+          scale_y_continuous(limits = c(0.985, 1.03))
+      
+#### Taxa de Consumo #####
+  #Belostomatidae
+    belos_cons_int <- lme(Totalpresascorrigido ~biomassa_mg*tratamento,
+                          random = ~1|bloco,
+                          data = belostomatidae, method = "ML", na.action = na.omit,
+                          weights = varIdent(form = ~1|tratamento))
+      summary(belos_cons_int)  
+      Anova(belos_cons_int, type = "III") 
+      plot(belos_cons_int)
+      CookD(belos_cons_int)
+      shapiro.test(resid(belos_cons_int))
+      
+    belos_cons <- lme(Totalpresascorrigido ~ biomassa_mg + tratamento,
+                      random = ~1|bloco,
+                      data = belostomatidae, method = "ML", na.action = na.omit,
+                      weights = varIdent(form = ~1|tratamento))
+      summary(belos_cons) 
+      Anova(belos_cons, type = "III") 
+      plot(belos_cons)
+      CookD(belos_cons)
+      shapiro.test(resid(belos_cons))
+      
+      qqPlot(resid(belos_cons))
+      
+    #plot
+      plot_lucas(model = belos_cons, dados = belostomatidae,
+                 eixo_y = belostomatidae$Totalpresascorrigido) +
+        ylab("Taxa de Consumo\n[presas/dia]") +
+        scale_x_continuous(breaks = c(0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
+                                      26, 28, 30, 32, 34, 36, 38))+
+        scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75))
+
+  #Anisoptera
+      aniso_cons_int <- lme(Totalpresascorrigido ~ log(biomassa_mg)*tratamento,
+                            random = ~1|bloco,
+                            data = anisoptera, method = "ML", na.action = na.omit,
+                            weights = varIdent(form = ~1|tratamento))
+        summary(aniso_cons_int)  
+        Anova(aniso_cons_int, type = "III") 
+        plot(aniso_cons_int)
+        CookD(aniso_cons_int)
+        shapiro.test(resid(aniso_cons_int))
+      
+      aniso_cons <- lme(Totalpresascorrigido ~ log(biomassa_mg) + tratamento,
+                        random = ~1|bloco,
+                        data = anisoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+        summary(aniso_cons)
+        Anova(aniso_cons, type = "II") 
+        plot(aniso_cons)
+        CookD(aniso_cons) #28 com cookd >1.2
+        shapiro.test(resid(aniso_cons))
+        
+          qqPlot(resid(aniso_cons)) # só um fora
+          AICctab(aniso_cons, aniso_cons_int, base = T, weights = T) #melhor com a inter
           
-                  
-                  
+        anisoptera$Totalpresascorrigido[28] <- NA
+        
+      #plot
+        plot_lucas(model = aniso_cons_int, dados = anisoptera,
+                   eixo_y = anisoptera$Totalpresascorrigido) +
+          ylab("Taxa de Consumo\n[presas/dia]")+
+          scale_x_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140, 160, 180))+
+          scale_y_continuous(breaks = c(1.0, 1.25, 1.5, 1.75, 2.0, 2.25)) +
+          ggtitle(expression(paste(italic("Erythrodiplax sp.")))) +
+          xlab("Biomassa [mg]")
+        
+  #Zygoptera
+    zygo_cons_int <- lme(Totalpresascorrigido ~ biomassa_mg*tratamento,
+                         random = ~1|bloco,
+                         data = zygoptera, method = "ML", na.action = na.omit,
+                         weights = varIdent(form = ~1|tratamento))
+      summary(zygo_cons_int)
+      Anova(zygo_cons_int, type = "III")
+      plot(zygo_cons_int)
+      CookD(zygo_cons_int) #28 com cookd >1.2
+      shapiro.test(resid(zygo_cons_int))
+      
+    zygo_cons <- lme(Totalpresascorrigido ~ biomassa_mg + tratamento,
+                        random = ~1|bloco,
+                        data = zygoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+      summary(zygo_cons)
+      Anova(zygo_cons, type = "II") 
+      plot(zygo_cons)
+      CookD(zygo_cons)#  7 cook D >0.5
+      shapiro.test(resid(zygo_cons))
+      
+      qqPlot(resid(zygo_cons)) # só um fora
+      qqPlot(resid(zygo_cons_int))
+      AICctab(zygo_cons, zygo_cons_int, base = T, weights = T)
+      
+      #zygoptera$Totalpresascorrigido[7] <- NA #melhor ficar com o inter e não tirar
+    
+      #plot
+        plot_lucas(model = zygo_cons_int, dados = zygoptera,
+                   eixo_y = zygoptera$Totalpresascorrigido) +
+          ylab("Taxa de Consumo\n[presas/dia]") +
+          scale_x_continuous(breaks = c(0, 2, 4, 6, 8, 10, 12, 14, 16,
+                                        16, 18, 20, 22, 24, 26, 28, 30, 32, 34))+
+          scale_y_continuous(breaks = c(0, 0.25,0.5, 0.75, 1.0, 1.25,
+                                        1.5, 1.75, 2.0, 2.25)) +
+          ggtitle(expression(paste(italic("Nehalennia sp.")))) +
+          geom_hline(yintercept = 0, linetype = 2) +
+          xlab("Biomassa [mg]") #px: 800 x 600
+        
+  #Notonectidae
+    noto_cons_int <- lme(Totalpresascorrigido ~ biomassa_mg*tratamento,
+                         random = ~1|bloco,
+                         data = notonectidae, method = "ML", na.action = na.omit,
+                         weights = varIdent(form = ~1|tratamento))
+      summary(noto_cons_int)
+      Anova(noto_cons_int, type = "III")
+      plot(noto_cons_int)
+      CookD(noto_cons_int) # 15 com cookD > 2!!
+      shapiro.test(resid(noto_cons_int))
+      
+    noto_cons <- lme(Totalpresascorrigido ~ biomassa_mg + tratamento,
+                     random = ~1|bloco,
+                     data = notonectidae, method = "ML", na.action = na.omit,
+                     weights = varIdent(form = ~1|tratamento))
+      summary(noto_cons)
+      Anova(noto_cons, type = "III")
+      plot(noto_cons)
+      CookD(noto_cons) # 15 com cD > 1.5
+      shapiro.test(resid(noto_cons))
+      
+        qqPlot(resid(noto_cons))
+        AICctab(noto_cons, noto_cons_int, base = T, weights = T)
+        
+        notonectidae$Totalpresascorrigido[15] <- NA
+      
+      #plot
+        plot_lucas(model = noto_cons, dados = notonectidae,
+                   eixo_y = notonectidae$Totalpresascorrigido)
+      
+      
+          
+      
+        
+        
+        
+        
+        
+        
+        
+        
