@@ -43,7 +43,18 @@ geral <- geral %>% mutate(biomassa_mg = biomassant*1000, #gr para mg
                                                          no = tempocap2)),
                           dif_temp_cap = ifelse(test = is.na(tempocap2),
                                                 yes = NA,
-                                                no = tempocap2 - tempocap1))
+                                                no = tempocap2 - tempocap1),
+                          taxacap = ifelse(test = presas_consumidas_gravacao == 0,
+                                           yes = (1/1.5),   # em capturas/hora
+                                           no = ifelse(
+                                             test = presas_consumidas_gravacao == 3,
+                                             yes = (3/((tempocap1+tempocap2+tempocap3)/3600)),
+                                             no = ifelse(
+                                               test = presas_consumidas_gravacao == 2,
+                                               yes = (2/((tempocap1+tempocap2)/3600)),
+                                               no = (1/((tempocap1)/3600))
+                                                         )
+                                           )))
 geral <- geral %>% filter(suborfam == "Anisoptera" |#excluindo os adultos de Belostomatidae
                             suborfam =="Zygoptera" | #para apenas trabalhar com ninfas
                             suborfam =="Notonectidae" | 
@@ -163,7 +174,8 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
         scale_x_continuous(breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
                            limits = c(4, 40.000001))+
         xlab("Biomassa [mg]") + ylab("Taxa de Crescimento") +
-        geom_hline(yintercept = 1, linetype =2)
+        geom_hline(yintercept = 1, linetype =2) +
+        ggtitle(expression(paste(italic("Belostoma sp."))))
       cresc_belo
       
       
@@ -245,7 +257,8 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
                                 eixo_y = anisoptera$taxacrescimento) +
         ylab("Taxa de Crescimento") +
         scale_x_continuous(breaks = c(0, 25, 50, 75,100, 125, 150, 175)) +
-        geom_hline(yintercept = 1, linetype = 2)
+        geom_hline(yintercept = 1, linetype = 2) +
+        ggtitle(expression(paste(italic("Erythrodiplax sp."))))
       cresc_aniso
 
   #Zygoptera
@@ -278,8 +291,9 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
         #plot
           plot_lucas(model = zygo_cresc, dados = zygoptera,
                    eixo_y = zygoptera$taxacrescimento) +
-            ylab("Taxa de Crescimento") + geom_hline(yintercept = 1, linetype = 2)
-            scale_x_continuous(breaks = c(0, 5, 10, 15, 20, 25, 30, 35))
+            ylab("Taxa de Crescimento") + geom_hline(yintercept = 1, linetype = 2)+
+            scale_x_continuous(breaks = c(0, 5, 10, 15, 20, 25, 30, 35)) +
+            ggtitle(expression(paste(italic("Nehalennia sp."))))
             
   #Notonectidae
     noto_cresc_int <- lme(taxacrescimento ~ biomassa_mg + tratamento,
@@ -305,12 +319,13 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       #notonectidae$taxacrescimento[15] <- NA  #cookD > 0.5
       
     #plot
-        plot_lucas(model = noto_cresc, dados = notonectidae,
+      plot_lucas(model = noto_cresc, dados = notonectidae,
                    eixo_y = notonectidae$taxacrescimento) +
           ylab("Taxa de Crescimento") + geom_hline(yintercept = 1, linetype = 2) +
           scale_x_continuous(breaks = c(0, 6, 8, 10, 12, 14, 16, 18, 20),
                              limits = c(6, 21)) +
-          scale_y_continuous(limits = c(0.985, 1.03))
+          scale_y_continuous(limits = c(0.985, 1.03)) +
+          ggtitle(expression(paste(italic("Buenoa sp."))))
       
 #### Taxa de Consumo #####
   #Belostomatidae
@@ -342,7 +357,8 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
         ylab("Taxa de Consumo\n[presas/dia]") +
         scale_x_continuous(breaks = c(0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                                       26, 28, 30, 32, 34, 36, 38))+
-        scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75))
+        scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75)) +
+        ggtitle(expression(paste(italic("Belostoma sp."))))
 
   #Anisoptera
       aniso_cons_int <- lme(Totalpresascorrigido ~ log(biomassa_mg)*tratamento,
@@ -387,7 +403,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       summary(zygo_cons_int)
       Anova(zygo_cons_int, type = "III")
       plot(zygo_cons_int)
-      CookD(zygo_cons_int) #28 com cookd >1.2
+      CookD(zygo_cons_int) #
       shapiro.test(resid(zygo_cons_int))
       
     zygo_cons <- lme(Totalpresascorrigido ~ biomassa_mg + tratamento,
@@ -434,21 +450,219 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
                      data = notonectidae, method = "ML", na.action = na.omit,
                      weights = varIdent(form = ~1|tratamento))
       summary(noto_cons)
-      Anova(noto_cons, type = "III")
+      Anova(noto_cons, type = "II")
       plot(noto_cons)
-      CookD(noto_cons) # 15 com cD > 1.5
+      CookD(noto_cons) #
       shapiro.test(resid(noto_cons))
       
         qqPlot(resid(noto_cons))
         AICctab(noto_cons, noto_cons_int, base = T, weights = T)
         
-        notonectidae$Totalpresascorrigido[15] <- NA
+        notonectidae$Totalpresascorrigido[15] <- NA 
+        notonectidae$Totalpresascorrigido[7] <- NA # tirei para finalmente normalizar os residuos
+        
       
       #plot
         plot_lucas(model = noto_cons, dados = notonectidae,
-                   eixo_y = notonectidae$Totalpresascorrigido)
+                   eixo_y = notonectidae$Totalpresascorrigido) +
+          scale_x_continuous(limits = c(5, 20),
+                             breaks = c(6, 8, 10, 12, 14, 16, 18, 20)) +
+          geom_hline(yintercept = 0, linetype = 2)+ 
+          ylab("Taxa de Consumo\n[presas/dia]")+
+          ggtitle(expression(paste(italic("Buenoa sp."))))
+        
+###### Taxa de Captura - testando #####
+  #Belostomatidae
+    belostomatidae %>% ggplot(aes(x = presas_consumidas_gravacao,
+                                  fill = tratamento,
+                                  alpha = 0.4)) + geom_density() #igua
+        
+    cap_belo_int <- glmer(presas_consumidas_gravacao ~ biomassa_mg*tratamento +
+                          (1|bloco), family = poisson,
+                    data = belostomatidae, na.action = na.omit)
+      summary(cap_belo_int)    
+      Anova(cap_belo_int, type = "III")
+    
+    cap_belo <- glmer(presas_consumidas_gravacao ~ biomassa_mg + tratamento +
+                        (1|bloco), family = poisson,
+                    data = belostomatidae, na.action = na.omit)
+      summary(cap_belo)
+      Anova(cap_belo, type = "II")
+      CookD(cap_belo)
+      qqPlot(resid(cap_belo))
+    
+    plot_lucas(model = cap_belo, dados = belostomatidae, eixo_y = belostomatidae$presas_consumidas_gravacao)
+ 
+  #Anisoptera
+    anisoptera %>% ggplot(aes(x = presas_consumidas_gravacao,
+                                  fill = tratamento,
+                                  alpha = 0.4)) + geom_density()
+    
+    cap_aniso_int <- glmer(presas_consumidas_gravacao ~ biomassa_mg*tratamento +
+                         (1|bloco), family = poisson,
+                       data = anisoptera, na.action = na.omit
+                       )
+      summary(cap_aniso_int)
+      Anova(cap_aniso_int, type = "III")
+      CookD(cap_aniso_int)
+      qqPlot(resid(cap_aniso_int))
+    
+    cap_aniso <- glmer(presas_consumidas_gravacao ~ biomassa_mg + tratamento +
+                         (1|bloco), family = poisson,
+                       data = anisoptera, na.action = na.omit)
+      summary(cap_aniso)
+      Anova(cap_aniso, type = "II")
+      CookD(cap_aniso)
+      qqPlot(resid(cap_aniso)) #faz sentido um qqplot normal? se é poisson
+      descdist(anisoptera$presas_consumidas_gravacao, boot = 1000)
+
       
       
+##### Tempo de 1a captura #####
+  belo_temcap_int <- lme(tempocap1 ~ biomassa_mg*tratamento,
+                           random = ~1|bloco,
+                           data = belostomatidae, method = "ML", na.action = na.omit,
+                           weights = varIdent(form = ~1|tratamento))
+    summary(belo_temcap_int)      
+    Anova(belo_temcap_int, type = "III")  
+    plot(belo_temcap_int)
+    CookD(belo_temcap_int) #
+    shapiro.test(resid(belo_temcap_int))
+    
+  belo_temcap <- lme(tempocap1 ~ biomassa_mg + tratamento,
+                     random = ~1|bloco,
+                     data = belostomatidae, method = "ML", na.action = na.omit,
+                     weights = varIdent(form = ~1|tratamento))
+    summary(belo_temcap)
+    Anova(belo_temcap, type = "II")
+    plot(belo_temcap)
+    CookD(belo_temcap) #
+    shapiro.test(resid(belo_temcap))
+    
+    qqPlot(resid(belo_temcap))
+    
+    #plot
+      plot_lucas(model = belo_temcap, dados = belostomatidae,
+                 eixo_y = belostomatidae$tempocap1) +
+        ylab("Tempo de 1ª captura [min]") +
+        scale_y_continuous(breaks = c(600, 1800, 3000, 4200, 5400),
+                           labels = c(10, 30, 50, 70, 90))+
+        scale_x_continuous(breaks = seq(from = 6, to = 38, by = 2))+
+        geom_hline(yintercept = 5400, linetype = 2)+
+        ggtitle(expression(paste(italic("Belostoma sp."))))
+      
+  #Anisoptera
+      aniso_temcap_int <- lme(tempocap1 ~ biomassa_mg*tratamento,
+                            random = ~1|bloco,
+                            data = anisoptera, method = "ML", na.action = na.omit,
+                            weights = varIdent(form = ~1|tratamento))
+        summary(aniso_temcap_int)  
+        Anova(aniso_temcap_int, type = "III") 
+        plot(aniso_temcap_int)
+        CookD(aniso_temcap_int)
+        shapiro.test(resid(aniso_temcap_int))
+      
+      aniso_temcap <- lme(tempocap1 ~ biomassa_mg + tratamento,
+                        random = ~1|bloco,
+                        data = anisoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+        summary(aniso_temcap)
+        Anova(aniso_temcap, type = "II") 
+        plot(aniso_temcap)
+        CookD(aniso_temcap) #28 com cookd >1.2
+        shapiro.test(resid(aniso_temcap))
+      
+      qqPlot(resid(aniso_temcap)) # só um fora
+      AICctab(aniso_temcap, aniso_temcap_int, base = T, weights = T) 
+        
+        #plot
+          plot_lucas(model = aniso_temcap, dados = anisoptera, 
+                    eixo_y = anisoptera$tempocap1)+
+            ylab("Tempo de 1ª captura [min]") +
+            scale_y_continuous(breaks = c(600, 1800, 3000, 4200, 5400),
+                               labels = c(10, 30, 50, 70, 90))+
+            scale_x_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140, 160, 180))+
+            geom_hline(yintercept = 5400, linetype = 2)+
+            ggtitle(expression(paste(italic("Erythrodiplax sp."))))
+          
+  #Zygoptera
+      zygo_temcap_int <- lme(tempocap1 ~ I(biomassa_mg^-1)*tratamento,
+                               random = ~1|bloco,
+                               data = zygoptera, method = "ML", na.action = na.omit)
+          summary(zygo_temcap_int)
+          Anova(zygo_temcap_int, type = "III")
+          plot(zygo_temcap_int)
+          CookD(zygo_temcap_int) #
+          shapiro.test(resid(zygo_temcap_int))
+          
+      zygo_temcap <- lme(tempocap1 ~ I(biomassa_mg^-1) + tratamento,
+                           random = ~1|bloco,
+                           data = zygoptera, method = "ML", na.action = na.omit)
+          summary(zygo_temcap)
+          Anova(zygo_temcap, type = "II") 
+          plot(zygo_temcap)
+          CookD(zygo_temcap)#
+          shapiro.test(resid(zygo_temcap))
+          
+          
+          qqPlot(resid(zygo_temcap)) # 
+          qqPlot(resid(zygo_temcap_int))
+          AICctab(zygo_temcap, zygo_temcap_int, base = T, weights = T)
+          
+          
+          
+    plot_lucas2(model = zygo_temcap_int, dados = zygoptera,
+               eixo_y = zygoptera$tempocap1) +
+      geom_hline(yintercept = 5400, linetype = 2)+
+      geom_hline(yintercept = 0)+
+      ylab("Tempo de 1ª captura [min]") +
+      scale_y_continuous(breaks = c(600, 1800, 3000, 4200, 5400),
+                         labels = c(10, 30, 50, 70, 90),
+                         limits = c(-1000, 5500)) +
+      scale_x_continuous(breaks = c(0, 2, 4, 6, 8, 10, 12, 14, 16,
+                                    16, 18, 20, 22, 24, 26, 28, 30, 32, 34))+
+      ggtitle(expression(paste(italic("Nehalennia sp."))))
+      
+    
+  #Notonectidae
+    noto_temcap_int <- lme(tempocap1 ~ biomassa_mg*tratamento,
+                         random = ~1|bloco,
+                         data = notonectidae, method = "ML", na.action = na.omit,
+                         weights = varIdent(form = ~1|tratamento))
+      summary(noto_temcap_int)
+      Anova(noto_temcap_int, type = "III")
+      plot(noto_temcap_int)
+      CookD(noto_temcap_int) #
+      shapiro.test(resid(noto_temcap_int))
+    
+    noto_temcap <- lme(tempocap1 ~ biomassa_mg + tratamento,
+                     random = ~1|bloco,
+                     data = notonectidae, method = "ML", na.action = na.omit,
+                     weights = varIdent(form = ~1|tratamento))
+      summary(noto_temcap)
+      Anova(noto_temcap, type = "II")
+      plot(noto_temcap)
+      CookD(noto_temcap) #
+      shapiro.test(resid(noto_temcap))
+    
+    qqPlot(resid(noto_temcap))
+    qqPlot(resid(noto_temcap_int))
+    AICctab(noto_temcap, noto_temcap_int, base = T, weights = T)
+      
+    notonectidae$tempocap1[15] <- NA #cook D > 1
+    
+    plot_lucas2(model = noto_temcap_int, dados = notonectidae,
+                eixo_y = notonectidae$tempocap1) +
+      scale_x_continuous(limits = c(5, 18),
+                         breaks = c(6, 8, 10, 12, 14, 16, 18, 20))+
+      scale_y_continuous(breaks = c(0, 600, 1800, 3000, 4200, 5400),
+                         labels = c(0, 10, 30, 50, 70, 90))+
+      ylab("Taxa de Consumo\n[presas/dia]")+
+      ggtitle(expression(paste(italic("Buenoa sp."))))+
+      geom_hline(yintercept = 5400, linetype = 2)+
+      geom_hline(yintercept = 0)
+    
+    
           
       
         

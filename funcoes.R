@@ -219,6 +219,40 @@ plot_lucas <- function(model, dados, eixo_y){
 }
 plot_lucas(model = belo_cresc_int2, dados = belostomatidae, eixo_y = belostomatidae$taxacrescimento) 
 
+plot_lucas2 <- function(model, dados, eixo_y){
+  predict_fun <- ggpredict(model, terms = c("biomassa_mg [all]", "tratamento"))
+  predict_fun
+  
+  ambiente <- predict_fun %>% filter(group == "Ambiente")
+  aquecido <- predict_fun %>% filter(group == "Aquecido")
+  
+  ggplot() +
+    geom_line(data = ambiente, aes(x = x, y = predicted),
+              color = "green", size = 3) +
+    geom_line(data = aquecido, aes(x = x, y = predicted),
+              color = "red", size = 3) +
+    geom_ribbon(data = ambiente, 
+                aes(x = x, ymin = predicted - std.error,
+                    ymax = predicted + std.error), 
+                fill = "lightgrey", alpha = 0.2) +
+    geom_ribbon(data = aquecido, 
+                aes(x = x, ymin = predicted - std.error,
+                    ymax = predicted + std.error), 
+                fill = "lightcoral", alpha = 0.2) +
+    geom_point(data = dados, aes(x = biomassa_mg,
+                                 y = eixo_y,
+                                 colour = tratamento,
+                                 shape = tratamento), size = 3)+
+    theme_classic (base_size = 16)+
+    scale_shape_discrete (guide = F)+
+    theme(legend.position = "bottom")+
+    scale_color_manual(name = "Condição Experimental",
+                       values = c("green", "red"),
+                       labels = c("Temperatura Ambiente",
+                                  "Temperatura Ambiente + 4°C"))+
+    xlab("Biomassa [mg]")
+  
+}
 
 
 plot_lucas_noxname <- function(model, dados, eixo_y){
