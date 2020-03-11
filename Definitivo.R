@@ -39,8 +39,8 @@ geral <- geral %>% mutate(biomassa_mg = biomassant*1000, #gr para mg
                           tempocap2 = ifelse(test = tempocap1==5400, #5400 segundos -> 1 h 30 min gravação
                                              yes = NA, #caso o anterior não capturou, não faz sentido ter a 2a
                                              no = ifelse(test = is.na(tempocap2), 
-                                                         yes = 5400-tempocap1, #caso tenha pego o primeiro
-                                                         no = tempocap2)),
+                                                         yes = 5400-(tempocap1), #caso tenha pego o primeiro
+                                                         no = tempocap2)), 
                           dif_temp_cap = ifelse(test = is.na(tempocap2),
                                                 yes = NA,
                                                 no = tempocap2 - tempocap1),
@@ -732,10 +732,110 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       ggtitle(expression(paste(italic("Nehalennia sp."))))+
       scale_x_continuous(breaks = c(6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26),
                          limits = c(5, 27))
+  
+  #Notonectidae
+    noto_tempomanip_int <- lme(tempomanip1 ~ biomassa_mg*tratamento,
+                               random = ~1|bloco,
+                               data = notonectidae, method = "ML", na.action = na.omit,
+                               weights = varIdent(form = ~1|tratamento))
+        summary(noto_tempomanip_int)
+        Anova(noto_tempomanip_int, type = "III")
+        plot(noto_tempomanip_int)
+        CookD(noto_tempomanip_int) #
+        shapiro.test(resid(noto_tempomanip_int))
+    
+    noto_tempomanip <- lme(tempomanip1 ~ biomassa_mg + tratamento,
+                             random = ~1|bloco,
+                             data = notonectidae, method = "ML", na.action = na.omit,
+                             weights = varIdent(form = ~1|tratamento))
+        summary(noto_tempomanip)
+        Anova(noto_tempomanip, type = "II")
+        plot(noto_tempomanip)
+        CookD(noto_tempomanip) #
+        shapiro.test(resid(noto_tempomanip))
+    
+        qqPlot(resid(noto_tempomanip))
+        qqPlot(resid(noto_tempomanip_int))
+        AICctab(noto_tempomanip, noto_tempomanip_int, base = T, weights = T)
+    
+    plot_lucas2(model = noto_tempomanip, dados = notonectidae,
+                eixo_y = notonectidae$tempomanip1) +
+      ylab("Tempo de manipulação [min]") +
+      ggtitle(expression(paste(italic("Buenoa sp.")))) +
+      scale_x_continuous(limits = c(8, 18),
+                         breaks = c(8, 10, 12, 14, 16, 18)) +
+      scale_y_continuous(breaks = c(600, 1800, 3000, 4200, 5400),
+                         labels = c(10, 30, 50, 70, 90))
+      
+#####Saciedade - Diferença de tempos de captura #####
+    #Belostomatidae
+    belo_sac_int <- lme(dif_temp_cap ~ biomassa_mg*tratamento,
+                           random = ~1|bloco,
+                           data = belostomatidae, method = "ML", na.action = na.omit,
+                           weights = varIdent(form = ~1|tratamento))
+        summary(belo_sac_int)      
+        Anova(belo_sac_int, type = "III")  
+        plot(belo_sac_int)
+        CookD(belo_sac_int) #
+        shapiro.test(resid(belo_sac_int))
+    
+    belo_sac <- lme(log(dif_temp_cap) ~ biomassa_mg + tratamento,
+                       random = ~1|bloco,
+                       data = belostomatidae, method = "ML", na.action = na.omit,
+                       weights = varIdent(form = ~1|tratamento))
+        summary(belo_sac)
+        Anova(belo_sac, type = "II")
+        plot(belo_sac)
+        CookD(belo_sac) #
+        shapiro.test(resid(belo_sac))
+        
+        qqPlot(resid(belo_sac))
+    
+    #plot
+      plot_lucas(model = belo_sac, dados = belostomatidae,
+                 eixo_y = belostomatidae$dif_temp_cap) +
+        ylab("Tempo de 2ª captura - Tempo de 1ª captura [s]") +
+        ggtitle(expression(paste(italic("Belostoma sp."))))
+      
+
+#Anisoptera
+      aniso_sac_int <- lme(dif_temp_cap ~ log(biomassa_mg)*tratamento, random = ~1|bloco,
+                                  data = anisoptera, na.action = na.omit,
+                                  weights = varIdent(form = ~1|tratamento))
+          summary(aniso_sac_int)  
+          Anova(aniso_sac_int, type = "III") 
+          plot(aniso_sac_int)
+          CookD(aniso_sac_int)
+          shapiro.test(resid(aniso_sac_int))
+      
+      aniso_sac <- lme(dif_temp_cap ~ log(biomassa_mg) + tratamento,
+                              random = ~1|bloco,
+                              data = anisoptera, method = "ML", na.action = na.omit,
+                              weights = varIdent(form = ~1|tratamento))
+          summary(aniso_sac)
+          Anova(aniso_sac, type = "II") 
+          plot(aniso_sac)
+          CookD(aniso_sac) #
+          shapiro.test(resid(aniso_sac))
+          
+      #anisoptera$dif_temp_cap[14] <- NA ponto fora mas tá estabilizando o modelo
+      
+      qqPlot(resid(aniso_sac)) #
+      AICctab(aniso_sac, aniso_sac_int, base = T, weights = T)   
+      
+      #plot
+      plot_lucas(model = aniso_sac, dados = anisoptera,
+                 eixo_y = anisoptera$dif_temp_cap) +
+        ylab("Tempo de 2ª captura - Tempo de 1ª captura [s]") + 
+        ggtitle(expression(paste(italic("Erythrodiplax sp."))))+
+        scale_x_continuous(breaks = c(20, 40, 60, 80, 100, 120, 140, 160))+
+        scale_y_continuous(breaks = c()) +
+        geom_hline(yintercept = 0, linetype = 2)
+
+    
+    
+    
         
         
         
-        
-        
-        
-        
+      
