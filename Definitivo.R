@@ -818,7 +818,7 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
           CookD(aniso_sac) #
           shapiro.test(resid(aniso_sac))
           
-      #anisoptera$dif_temp_cap[14] <- NA ponto fora mas tá estabilizando o modelo
+      #anisoptera$dif_temp_cap[14] <- NA ponto fora mas tá estabilizando o modelo, deixa ele
       
       qqPlot(resid(aniso_sac)) #
       AICctab(aniso_sac, aniso_sac_int, base = T, weights = T)   
@@ -826,11 +826,46 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
       #plot
       plot_lucas(model = aniso_sac, dados = anisoptera,
                  eixo_y = anisoptera$dif_temp_cap) +
-        ylab("Tempo de 2ª captura - Tempo de 1ª captura [s]") + 
-        ggtitle(expression(paste(italic("Erythrodiplax sp."))))+
-        scale_x_continuous(breaks = c(20, 40, 60, 80, 100, 120, 140, 160))+
-        scale_y_continuous(breaks = c()) +
+        ylab("Tempo de 2ª captura - Tempo de 1ª captura [min]") + 
+        ggtitle(expression(paste(italic("Erythrodiplax sp.")))) +
+        scale_x_continuous(breaks = c(20, 40, 60, 80, 100, 120, 140, 160)) +
+        scale_y_continuous(breaks = c(-3600, -2400, -1200, 0,
+                                      1200, 2400, 3600, 4800),
+                           labels = c(-60, -40, -20, 0,
+                                      20, 40, 60, 80)) +
         geom_hline(yintercept = 0, linetype = 2)
+      
+  #Zygoptera
+    zygo_sac_int <- lme(dif_temp_cap ~ biomassa_mg*tratamento, random = ~1|bloco,
+                        data = zygoptera, na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+        summary(zygo_sac_int)  
+        Anova(zygo_sac_int, type = "III") 
+        plot(zygo_sac_int)
+        CookD(zygo_sac_int)
+        shapiro.test(resid(zygo_sac_int))
+    
+    zygo_sac <- lme(dif_temp_cap ~ log(biomassa_mg) + tratamento,
+                        random = ~1|bloco,
+                        data = zygoptera, method = "ML", na.action = na.omit,
+                        weights = varIdent(form = ~1|tratamento))
+        summary(aniso_sac)
+        Anova(aniso_sac, type = "II") 
+        plot(aniso_sac)
+        CookD(aniso_sac) #
+        shapiro.test(resid(aniso_sac))
+        
+    #plot
+        plot_lucas_custom(model = zygo_sac, dados = zygoptera,
+                   eixo_y = zygoptera$dif_temp_cap, term_x = "biomassa_mg [all]") +
+          ylab("Tempo de 2ª captura - Tempo de 1ª captura [min]") + 
+          ggtitle(expression(paste(italic("Nehalennia sp.")))) +
+          scale_x_continuous(breaks = c(6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28)) +
+          scale_y_continuous(breaks = c(-3600, -2400, -1200, 0,
+                                        1200, 2400, 3600, 4800),
+                             labels = c(-60, -40, -20, 0,
+                                        20, 40, 60, 80)) +
+          geom_hline(yintercept = 0, linetype = 2)
 
     
     
