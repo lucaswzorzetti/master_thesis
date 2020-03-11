@@ -664,8 +664,74 @@ Anova(aov(biomassa_mg~tratamento + bloco, data = notonectidae))
     
     
           
-      
+##### Tempo de manipulação #####
+    anisoptera %>% ggplot(aes(x = tempomanip1)) + geom_density()
+    
+    aniso_tempomanip_int <- lme(log(tempomanip1) ~ biomassa_mg*tratamento, random = ~1|bloco,
+                                data = anisoptera, na.action = na.omit,
+                                weights = varIdent(form = ~1|tratamento))
+        summary(aniso_tempomanip_int)  
+        Anova(aniso_tempomanip_int, type = "III") 
+        plot(aniso_tempomanip_int)
+        CookD(aniso_tempomanip_int)
+        shapiro.test(resid(aniso_tempomanip_int))
+    
+    aniso_tempomanip <- lme(log(tempomanip1) ~ biomassa_mg + tratamento,
+                            random = ~1|bloco,
+                            data = anisoptera, method = "ML", na.action = na.omit,
+                            weights = varIdent(form = ~1|tratamento))
+        summary(aniso_tempomanip)
+        Anova(aniso_tempomanip, type = "II") 
+        plot(aniso_tempomanip)
+        CookD(aniso_tempomanip) #
+        shapiro.test(resid(aniso_tempomanip))
         
+    qqPlot(resid(aniso_tempomanip)) # só um fora
+    AICctab(aniso_tempomanip, aniso_tempomanip_int, base = T, weights = T) 
+    
+    anisoptera$tempomanip1[18] <- NA #Cd >0.5
+    
+    #plot
+    plot_lucas(model = aniso_tempomanip, dados = anisoptera,
+               eixo_y = anisoptera$tempomanip1) +
+      ylab("Tempo de manipulação [s]") + 
+      ggtitle(expression(paste(italic("Erythrodiplax sp."))))+
+      scale_x_continuous(breaks = c(20, 40, 60, 80, 100, 120, 140, 160))
+    
+  #Zygoptera
+    zygo_tempomanip_int <- lme(log(tempomanip1) ~ biomassa_mg*tratamento,
+                           random = ~1|bloco,
+                           data = zygoptera, method = "ML", na.action = na.omit)
+        summary(zygo_tempomanip_int)
+        Anova(zygo_tempomanip_int, type = "III")
+        plot(zygo_tempomanip_int)
+        CookD(zygo_tempomanip_int) #
+        shapiro.test(resid(zygo_tempomanip_int))
+    
+    zygo_tempomanip <- lme(log(tempomanip1) ~ biomassa_mg + tratamento,
+                       random = ~1|bloco,
+                       data = zygoptera, method = "ML", na.action = na.omit)
+        summary(zygo_tempomanip)
+        Anova(zygo_tempomanip, type = "II") 
+        plot(zygo_tempomanip)
+        CookD(zygo_tempomanip)#
+        shapiro.test(resid(zygo_tempomanip))
+    
+        zygoptera$tempomanip1[3] <- NA
+        zygoptera$tempomanip1[24] <- NA
+    
+      qqPlot(resid(zygo_tempomanip)) # 
+      qqPlot(resid(zygo_tempomanip_int))
+      AICctab(zygo_tempomanip, zygo_tempomanip_int, base = T, weights = T)
+    
+    
+    
+    plot_lucas2(model = zygo_tempomanip, dados = zygoptera,
+                eixo_y = zygoptera$tempomanip1) +
+      ylab("Tempo de Manipulação [s]") +
+      ggtitle(expression(paste(italic("Nehalennia sp."))))+
+      scale_x_continuous(breaks = c(6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26),
+                         limits = c(5, 27))
         
         
         
