@@ -207,10 +207,22 @@ plot_lucas <- function(model, dados, eixo_y){
                                  y = eixo_y,
                                  colour = tratamento,
                                  shape = tratamento), size = 3)+
-    theme_classic (base_size = 16)+
-    scale_shape_discrete (guide = F)+
-    theme(legend.position = "bottom")+
-    scale_color_manual(name = "Condição Experimental",
+    theme_classic ()+
+    scale_shape_discrete (name = "Condição Experimental:",
+                          labels = c("Temperatura Ambiente",
+                                     "Temperatura Ambiente + 4°C"))+
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 20),
+          axis.title.x = element_text(margin = margin(t = 10)),
+          axis.title.y = element_text(margin = margin(r = 10)),
+          title = element_text(size = 20),
+          axis.text = element_text(size = 18),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 14),
+          legend.spacing.x = unit(0.01, 'cm'),
+          legend.title.align = 1,
+          legend.margin = margin(l = 0))+
+    scale_color_manual(name = "Condição Experimental:",
                        values = c("green", "red"),
                        labels = c("Temperatura Ambiente",
                                   "Temperatura Ambiente + 4°C"))+
