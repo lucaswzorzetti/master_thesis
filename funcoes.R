@@ -1,4 +1,4 @@
-##Funções que acompanham o scrypt do mestrado
+######Funções que acompanham o scrypt do mestrado####
 
   #Função para representar graficamente os modelos
   model_line <- function(dados, xaxis, yaxis, ynome, model, title = ""){
@@ -335,3 +335,15 @@ plot_lucas_custom <- function(model, dados, eixo_y, term_x = "biomassa_mg"){
     xlab("Biomassa [mg]")
   
 }
+
+
+
+#####Função para calcular cohenD ######
+cohen_f2 <- function(modelo_nulo, modelo_alternativo){
+  library(MuMIn)
+  (r.squaredGLMM((modelo_alternativo))[1,1] - 
+    r.squaredGLMM(modelo_nulo)[1,1])/(1 - r.squaredGLMM(modelo_alternativo)[1,1])
+}
+
+
+
